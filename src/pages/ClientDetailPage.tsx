@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   IconButton,
   List,
@@ -21,6 +22,7 @@ import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
+import { ClientOrdersSection } from '../components/ClientOrdersSection';
 import type { ClientDetail } from '../types/clients';
 
 export function ClientDetailPage() {
@@ -92,10 +94,15 @@ export function ClientDetailPage() {
 
   return (
     <>
-      <Typography variant="h4" gutterBottom>
-        {client.name}
-      </Typography>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+          {client.name}
+        </Typography>
+        {client.code && <Chip label={client.code} />}
+      </Stack>
       {client.contactName && <Typography color="text.secondary">{client.contactName}</Typography>}
+
+      <ClientOrdersSection clientId={client._id} canModify={canModify} />
 
       <Typography variant="h6" sx={{ mt: 3 }}>
         Контракти

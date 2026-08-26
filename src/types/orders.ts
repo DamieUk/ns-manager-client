@@ -5,3 +5,18 @@ export interface OrderSummary {
   quantity: number;
   status: string;
 }
+
+export interface Product {
+  _id: string;
+  name: string;
+  sku: string;
+  description?: string;
+}
+
+export interface OrderInput {
+  client: string;
+  product: string;
+  quantity: number;
+  status?: string;
+}
+
