@@ -2,8 +2,10 @@ import { Alert } from '@mui/material';
 import { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 
+type Status = 'checking' | 'ok' | 'error';
+
 function ApiStatus() {
-  const [status, setStatus] = useState('checking');
+  const [status, setStatus] = useState<Status>('checking');
 
   useEffect(() => {
     let cancelled = false;
