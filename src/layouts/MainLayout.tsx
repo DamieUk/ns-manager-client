@@ -12,7 +12,11 @@ function NavButton({ to, children }: { to: string; children: ReactNode }) {
     <Button
       component={Link}
       to={to}
-      sx={{ color: 'inherit', fontWeight: isActive ? 700 : 400, ml: 2 }}
+      sx={{
+        color: isActive ? 'primary.main' : 'text.secondary',
+        fontWeight: isActive ? 700 : 600,
+        ml: 2,
+      }}
     >
       {children}
     </Button>
@@ -40,7 +44,10 @@ function MainLayout() {
           )}
           {user.role === 'employee' && <NavButton to="/progress">Мій прогрес</NavButton>}
 
-          <Avatar src={user.avatarUrl ?? undefined} sx={{ width: 32, height: 32, ml: 3 }}>
+          <Avatar
+            src={user.avatarUrl ?? undefined}
+            sx={{ width: 32, height: 32, ml: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}
+          >
             {user.name.charAt(0).toUpperCase()}
           </Avatar>
           <IconButton color="inherit" onClick={logout} sx={{ ml: 1 }} aria-label="Вийти">

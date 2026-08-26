@@ -20,8 +20,8 @@ function AuthSuccessPanel({ title, message, buttonLabel, to }: AuthSuccessPanelP
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'rgba(34, 211, 238, 0.12)',
-          color: 'secondary.main',
+          backgroundColor: 'rgba(0, 109, 91, 0.18)',
+          color: 'primary.main',
         }}
       >
         <CheckCircleOutlineIcon fontSize="large" />
