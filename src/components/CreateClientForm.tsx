@@ -1,5 +1,6 @@
-import { Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
+import { Button, CircularProgress, Stack, TextField } from '@mui/material';
 import { useFormik } from 'formik';
+import { FileDropzone } from './FileDropzone';
 
 export interface CreateClientFormValues {
   name: string;
@@ -103,35 +104,23 @@ export function CreateClientForm({ submitting, onSubmit, onCancel }: CreateClien
         fullWidth
       />
 
-      <Button variant="outlined" component="label">
-        {formik.values.contractFile ? formik.values.contractFile.name : 'Завантажити PDF контракту *'}
-        <input
-          type="file"
-          accept="application/pdf"
-          hidden
-          onChange={(e) => {
-            formik.setFieldValue('contractFile', e.target.files?.[0] ?? null);
-            formik.setFieldTouched('contractFile', true);
-          }}
-        />
-      </Button>
-      {formik.touched.contractFile && formik.errors.contractFile && (
-        <Typography variant="caption" color="error">
-          {formik.errors.contractFile}
-        </Typography>
-      )}
+      <FileDropzone
+        label="Перетягніть PDF контракту сюди або натисніть, щоб обрати *"
+        accept={{ 'application/pdf': ['.pdf'] }}
+        files={formik.values.contractFile ? [formik.values.contractFile] : []}
+        onChange={(files) => {
+          formik.setFieldValue('contractFile', files[0] ?? null);
+          formik.setFieldTouched('contractFile', true);
+        }}
+        error={formik.touched.contractFile ? formik.errors.contractFile : undefined}
+      />
 
-      <Button variant="outlined" component="label">
-        {formik.values.supportingFiles.length > 0
-          ? `Обрано файлів: ${formik.values.supportingFiles.length}`
-          : 'Додаткові документи (необовʼязково)'}
-        <input
-          type="file"
-          multiple
-          hidden
-          onChange={(e) => formik.setFieldValue('supportingFiles', Array.from(e.target.files ?? []))}
-        />
-      </Button>
+      <FileDropzone
+        label="Додаткові документи (необовʼязково)"
+        multiple
+        files={formik.values.supportingFiles}
+        onChange={(files) => formik.setFieldValue('supportingFiles', files)}
+      />
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end', pt: 1 }}>
         <Button onClick={onCancel} disabled={submitting}>

@@ -1,29 +1,17 @@
-import DeleteIcon from '@mui/icons-material/Delete';
-import DownloadIcon from '@mui/icons-material/Download';
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  MenuItem,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { Alert, Box, Chip, CircularProgress, List, ListItem, ListItemText, Paper, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
+import { ClientDocumentsSection } from '../components/ClientDocumentsSection';
 import { ClientOrdersSection } from '../components/ClientOrdersSection';
+import { ClientProductsSection } from '../components/ClientProductsSection';
+import { DocumentList } from '../components/DocumentList';
 import type { ClientDetail } from '../types/clients';
+
+type TabKey = 'orders' | 'products' | 'documents';
 
 export function ClientDetailPage() {
   const { user } = useAuth();
@@ -31,11 +19,9 @@ export function ClientDetailPage() {
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [uploadContractId, setUploadContractId] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<TabKey>('orders');
 
   function loadClient() {
-    setLoading(true);
     apiClient
       .get<ClientDetail>(`/clients/${clientId}`)
       .then((res) => setClient(res.data))
@@ -45,52 +31,12 @@ export function ClientDetailPage() {
 
   useEffect(loadClient, [clientId]);
 
-  async function handleUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !uploadContractId) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('relatedType', 'Contract');
-    formData.append('relatedId', uploadContractId);
-
-    try {
-      await apiClient.post('/documents', formData);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      loadClient();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    }
-  }
-
-  async function handleDeleteDocument(id: string) {
-    try {
-      await apiClient.delete(`/documents/${id}`);
-      loadClient();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    }
-  }
-
-  async function handleDownload(id: string, originalName: string) {
-    try {
-      const res = await apiClient.get(`/documents/${id}/download`, { responseType: 'blob' });
-      const url = URL.createObjectURL(res.data as Blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = originalName;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    }
-  }
-
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!client) return null;
 
-  const canModify = hasPermission(user, 'ORDERS', 'modify');
+  const canModifyOrders = hasPermission(user, 'ORDERS', 'modify');
+  const canModifyProducts = hasPermission(user, 'PRODUCTS', 'modify');
 
   return (
     <>
@@ -102,15 +48,16 @@ export function ClientDetailPage() {
       </Stack>
       {client.contactName && <Typography color="text.secondary">{client.contactName}</Typography>}
 
-      <ClientOrdersSection clientId={client._id} canModify={canModify} />
-
       <Typography variant="h6" sx={{ mt: 3 }}>
         Контракти
       </Typography>
       <List component={Paper} sx={{ mb: 3 }}>
         {client.contracts.map((contract) => (
-          <ListItem key={contract._id}>
+          <ListItem key={contract._id} sx={{ display: 'block' }}>
             <ListItemText primary={contract.title} secondary={contract.status} />
+            <Box sx={{ pl: 2 }}>
+              <DocumentList documents={contract.documents} dense onError={setError} />
+            </Box>
           </ListItem>
         ))}
         {client.contracts.length === 0 && (
@@ -120,56 +67,28 @@ export function ClientDetailPage() {
         )}
       </List>
 
-      <Typography variant="h6">Документи</Typography>
-      <List component={Paper}>
-        {client.documents.map((doc) => (
-          <ListItem
-            key={doc._id}
-            secondaryAction={
-              <>
-                <IconButton onClick={() => handleDownload(doc._id, doc.originalName)}>
-                  <DownloadIcon />
-                </IconButton>
-                {canModify && (
-                  <IconButton onClick={() => handleDeleteDocument(doc._id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                )}
-              </>
-            }
-          >
-            <ListItemText primary={doc.originalName} />
-          </ListItem>
-        ))}
-        {client.documents.length === 0 && (
-          <ListItem>
-            <ListItemText primary="Немає документів" />
-          </ListItem>
-        )}
-      </List>
+      <Tabs value={tab} onChange={(_, value) => setTab(value)} sx={{ mb: 2 }}>
+        <Tab value="orders" label="Замовлення" />
+        <Tab value="products" label="Продукти" />
+        <Tab value="documents" label="Документи" />
+      </Tabs>
 
-      {canModify && client.contracts.length > 0 && (
-        <Box sx={{ mt: 2 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-            <TextField
-              select
-              label="Контракт"
-              value={uploadContractId}
-              onChange={(e) => setUploadContractId(e.target.value)}
-              sx={{ minWidth: 200 }}
-            >
-              {client.contracts.map((contract) => (
-                <MenuItem key={contract._id} value={contract._id}>
-                  {contract.title}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Button variant="outlined" component="label" disabled={!uploadContractId}>
-              Завантажити документ
-              <input ref={fileInputRef} type="file" hidden onChange={handleUpload} />
-            </Button>
-          </Stack>
-        </Box>
+      {tab === 'orders' && (
+        <ClientOrdersSection
+          clientId={client._id}
+          canModify={canModifyOrders}
+          documentPool={client.documents}
+          onRefreshClient={loadClient}
+        />
+      )}
+      {tab === 'products' && <ClientProductsSection clientId={client._id} canModify={canModifyProducts} />}
+      {tab === 'documents' && (
+        <ClientDocumentsSection
+          clientId={client._id}
+          documents={client.documents}
+          canModify={canModifyOrders}
+          onRefreshClient={loadClient}
+        />
       )}
     </>
   );

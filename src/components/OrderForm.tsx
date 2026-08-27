@@ -1,6 +1,9 @@
-import { Button, CircularProgress, MenuItem, Stack, TextField } from '@mui/material';
+import { Autocomplete, Button, CircularProgress, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { useFormik } from 'formik';
-import type { OrderSummary, Product } from '../types/orders';
+import { useState } from 'react';
+import type { ClientDocument } from '../types/clients';
+import type { OrderDetail, Product } from '../types/orders';
+import { FileDropzone } from './FileDropzone';
 
 const ORDER_STATUSES = ['active', 'completed', 'cancelled'] as const;
 
@@ -8,6 +11,7 @@ export interface OrderFormValues {
   product: string;
   quantity: number;
   status: string;
+  documents: string[];
 }
 
 function validate(values: OrderFormValues): Partial<Record<keyof OrderFormValues, string>> {
@@ -19,25 +23,57 @@ function validate(values: OrderFormValues): Partial<Record<keyof OrderFormValues
 
 interface OrderFormProps {
   products: Product[];
-  initialValue?: OrderSummary | null;
+  documentPool: ClientDocument[];
+  initialValue?: OrderDetail | null;
   submitting: boolean;
   onSubmit: (values: OrderFormValues) => void;
   onCancel: () => void;
+  onUploadDocument: (file: File) => Promise<ClientDocument>;
 }
 
-export function OrderForm({ products, initialValue, submitting, onSubmit, onCancel }: OrderFormProps) {
+export function OrderForm({
+  products,
+  documentPool,
+  initialValue,
+  submitting,
+  onSubmit,
+  onCancel,
+  onUploadDocument,
+}: OrderFormProps) {
+  const [localNewDocs, setLocalNewDocs] = useState<ClientDocument[]>(initialValue?.documents ?? []);
+  const [uploading, setUploading] = useState(false);
+
   const formik = useFormik<OrderFormValues>({
     initialValues: {
       product: initialValue?.product.id ?? '',
       quantity: initialValue?.quantity ?? 1,
       status: initialValue?.status ?? 'active',
+      documents: initialValue?.documents.map((d) => d._id) ?? [],
     },
     validate,
     onSubmit,
   });
 
+  const allDocuments = [
+    ...documentPool,
+    ...localNewDocs.filter((d) => !documentPool.some((p) => p._id === d._id)),
+  ];
+
+  async function handleDrop(files: File[]) {
+    const file = files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const doc = await onUploadDocument(file);
+      setLocalNewDocs((prev) => [...prev, doc]);
+      formik.setFieldValue('documents', [...formik.values.documents, doc._id]);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
-    <Stack component="form" spacing={2} onSubmit={formik.handleSubmit} sx={{ minWidth: 320, mt: 1 }}>
+    <Stack component="form" spacing={2} onSubmit={formik.handleSubmit} sx={{ minWidth: 360, mt: 1 }}>
       <TextField
         select
         name="product"
@@ -79,11 +115,37 @@ export function OrderForm({ products, initialValue, submitting, onSubmit, onCanc
         </TextField>
       )}
 
+      <Autocomplete
+        multiple
+        options={allDocuments}
+        getOptionLabel={(d) => d.originalName}
+        isOptionEqualToValue={(a, b) => a._id === b._id}
+        value={allDocuments.filter((d) => formik.values.documents.includes(d._id))}
+        onChange={(_, selected) =>
+          formik.setFieldValue(
+            'documents',
+            selected.map((d) => d._id)
+          )
+        }
+        renderInput={(params) => <TextField {...params} label="Існуючі документи" placeholder="Оберіть..." />}
+      />
+
+      <FileDropzone
+        label={uploading ? 'Завантаження...' : 'Або перетягніть новий файл — додасться автоматично'}
+        files={[]}
+        onChange={handleDrop}
+      />
+      {localNewDocs.length > 0 && (
+        <Typography variant="caption" color="text.secondary">
+          Нові файли цієї сесії: {localNewDocs.map((d) => d.originalName).join(', ')}
+        </Typography>
+      )}
+
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end' }}>
         <Button onClick={onCancel} disabled={submitting}>
           Скасувати
         </Button>
-        <Button type="submit" variant="contained" disabled={submitting}>
+        <Button type="submit" variant="contained" disabled={submitting || uploading}>
           {submitting ? <CircularProgress size={20} /> : 'Зберегти'}
         </Button>
       </Stack>

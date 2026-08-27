@@ -1,8 +1,6 @@
 import DeleteIcon from '@mui/icons-material/Delete';
-import DownloadIcon from '@mui/icons-material/Download';
 import EditIcon from '@mui/icons-material/Edit';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {
   Alert,
   Box,
@@ -15,9 +13,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
   Paper,
   Stack,
   Table,
@@ -28,34 +23,34 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { Fragment, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import type { ClientDocument } from '../types/clients';
-import type { OrderFormValues } from './OrderForm';
-import type { OrderSummary, Product } from '../types/orders';
-import { OrderForm } from './OrderForm';
+import type { OrderDetail, OrderSummary, Product } from '../types/orders';
+import { DocumentList } from './DocumentList';
+import { OrderForm, type OrderFormValues } from './OrderForm';
 
-type DocsState = 'loading' | ClientDocument[] | 'error';
+type OrderDetailState = 'loading' | OrderDetail | 'error';
 
 interface ClientOrdersSectionProps {
   clientId: string;
   canModify: boolean;
+  documentPool: ClientDocument[];
+  onRefreshClient: () => void;
 }
 
-export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSectionProps) {
+export function ClientOrdersSection({ clientId, canModify, documentPool, onRefreshClient }: ClientOrdersSectionProps) {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [documentsByOrder, setDocumentsByOrder] = useState<Record<string, DocsState>>({});
+  const [detailsById, setDetailsById] = useState<Record<string, OrderDetailState>>({});
   const [formOpen, setFormOpen] = useState(false);
-  const [editingOrder, setEditingOrder] = useState<OrderSummary | null>(null);
+  const [editingOrder, setEditingOrder] = useState<OrderDetail | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadTargetOrderId = useRef<string | null>(null);
 
   function loadOrders() {
     setLoading(true);
@@ -69,16 +64,15 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
   useEffect(loadOrders, [clientId]);
 
   useEffect(() => {
-    if (!canModify) return;
-    apiClient.get<Product[]>('/products').then((res) => setProducts(res.data));
-  }, [canModify]);
+    apiClient.get<Product[]>('/products', { params: { client: clientId } }).then((res) => setProducts(res.data));
+  }, [clientId]);
 
-  function loadDocuments(orderId: string) {
-    setDocumentsByOrder((prev) => ({ ...prev, [orderId]: 'loading' }));
+  function loadOrderDetail(orderId: string) {
+    setDetailsById((prev) => ({ ...prev, [orderId]: 'loading' }));
     apiClient
-      .get<ClientDocument[]>('/documents', { params: { relatedType: 'Order', relatedId: orderId } })
-      .then((res) => setDocumentsByOrder((prev) => ({ ...prev, [orderId]: res.data })))
-      .catch(() => setDocumentsByOrder((prev) => ({ ...prev, [orderId]: 'error' })));
+      .get<OrderDetail>(`/orders/${orderId}`)
+      .then((res) => setDetailsById((prev) => ({ ...prev, [orderId]: res.data })))
+      .catch(() => setDetailsById((prev) => ({ ...prev, [orderId]: 'error' })));
   }
 
   function toggleExpand(orderId: string) {
@@ -88,7 +82,7 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
         next.delete(orderId);
       } else {
         next.add(orderId);
-        if (!documentsByOrder[orderId]) loadDocuments(orderId);
+        loadOrderDetail(orderId);
       }
       return next;
     });
@@ -99,9 +93,24 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
     setFormOpen(true);
   }
 
-  function openEdit(order: OrderSummary) {
-    setEditingOrder(order);
+  async function openEdit(orderId: string) {
+    const cached = detailsById[orderId];
+    if (cached && cached !== 'loading' && cached !== 'error') {
+      setEditingOrder(cached);
+    } else {
+      const res = await apiClient.get<OrderDetail>(`/orders/${orderId}`);
+      setEditingOrder(res.data);
+    }
     setFormOpen(true);
+  }
+
+  async function handleUploadDocument(file: File): Promise<ClientDocument> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('client', clientId);
+    const res = await apiClient.post<ClientDocument>('/documents', formData);
+    onRefreshClient();
+    return res.data;
   }
 
   async function handleSubmitOrder(values: OrderFormValues) {
@@ -114,6 +123,7 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
       }
       setFormOpen(false);
       loadOrders();
+      if (editingOrder) loadOrderDetail(editingOrder.id);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -132,56 +142,18 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
     }
   }
 
-  function triggerUpload(orderId: string) {
-    uploadTargetOrderId.current = orderId;
-    fileInputRef.current?.click();
-  }
-
-  async function handleUploadChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    const orderId = uploadTargetOrderId.current;
-    if (!file || !orderId) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('relatedType', 'Order');
-    formData.append('relatedId', orderId);
-
+  async function handleDetachDocument(order: OrderDetail, docId: string) {
     try {
-      await apiClient.post('/documents', formData);
-      loadDocuments(orderId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  }
-
-  async function handleDeleteDocument(orderId: string, docId: string) {
-    try {
-      await apiClient.delete(`/documents/${docId}`);
-      loadDocuments(orderId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    }
-  }
-
-  async function handleDownloadDocument(docId: string, originalName: string) {
-    try {
-      const res = await apiClient.get(`/documents/${docId}/download`, { responseType: 'blob' });
-      const url = URL.createObjectURL(res.data as Blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = originalName;
-      link.click();
-      URL.revokeObjectURL(url);
+      const remaining = order.documents.filter((d) => d._id !== docId).map((d) => d._id);
+      await apiClient.put(`/orders/${order.id}`, { documents: remaining });
+      loadOrderDetail(order.id);
     } catch (err) {
       setError(getErrorMessage(err));
     }
   }
 
   return (
-    <Box sx={{ mt: 3 }}>
+    <Box>
       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography variant="h6">Замовлення</Typography>
         {canModify && (
@@ -214,7 +186,7 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
             <TableBody>
               {orders.map((order) => {
                 const expanded = expandedIds.has(order.id);
-                const docs = documentsByOrder[order.id];
+                const detail = detailsById[order.id];
                 return (
                   <Fragment key={order.id}>
                     <TableRow>
@@ -234,7 +206,7 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
                       </TableCell>
                       {canModify && (
                         <TableCell align="right">
-                          <IconButton size="small" onClick={() => openEdit(order)}>
+                          <IconButton size="small" onClick={() => openEdit(order.id)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
                           <IconButton size="small" onClick={() => setDeleteTargetId(order.id)}>
@@ -247,48 +219,17 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
                       <TableCell colSpan={canModify ? 5 : 4} sx={{ py: 0, borderBottom: expanded ? undefined : 'none' }}>
                         <Collapse in={expanded} timeout="auto" unmountOnExit>
                           <Box sx={{ py: 2 }}>
-                            <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                              <Typography variant="subtitle2">Документи замовлення</Typography>
-                              {canModify && (
-                                <Button
-                                  size="small"
-                                  startIcon={<UploadFileIcon />}
-                                  onClick={() => triggerUpload(order.id)}
-                                >
-                                  Завантажити
-                                </Button>
-                              )}
-                            </Stack>
-                            {docs === 'loading' && <CircularProgress size={18} />}
-                            {docs === 'error' && <Alert severity="error">Не вдалося завантажити документи</Alert>}
-                            {Array.isArray(docs) && docs.length === 0 && (
-                              <Typography color="text.secondary" variant="body2">
-                                Немає документів
-                              </Typography>
-                            )}
-                            {Array.isArray(docs) && docs.length > 0 && (
-                              <List dense>
-                                {docs.map((doc) => (
-                                  <ListItem
-                                    key={doc._id}
-                                    disableGutters
-                                    secondaryAction={
-                                      <>
-                                        <IconButton size="small" onClick={() => handleDownloadDocument(doc._id, doc.originalName)}>
-                                          <DownloadIcon fontSize="small" />
-                                        </IconButton>
-                                        {canModify && (
-                                          <IconButton size="small" onClick={() => handleDeleteDocument(order.id, doc._id)}>
-                                            <DeleteIcon fontSize="small" />
-                                          </IconButton>
-                                        )}
-                                      </>
-                                    }
-                                  >
-                                    <ListItemText primary={doc.originalName} />
-                                  </ListItem>
-                                ))}
-                              </List>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                              Документи замовлення
+                            </Typography>
+                            {detail === 'loading' && <CircularProgress size={18} />}
+                            {detail === 'error' && <Alert severity="error">Не вдалося завантажити деталі</Alert>}
+                            {detail && detail !== 'loading' && detail !== 'error' && (
+                              <DocumentList
+                                documents={detail.documents}
+                                onDetach={canModify ? (docId) => handleDetachDocument(detail, docId) : undefined}
+                                onError={setError}
+                              />
                             )}
                           </Box>
                         </Collapse>
@@ -309,17 +250,17 @@ export function ClientOrdersSection({ clientId, canModify }: ClientOrdersSection
         </TableContainer>
       )}
 
-      <input ref={fileInputRef} type="file" hidden onChange={handleUploadChange} />
-
       <Dialog open={formOpen} onClose={() => setFormOpen(false)} key={editingOrder?.id ?? 'new'}>
         <DialogTitle>{editingOrder ? 'Редагувати замовлення' : 'Нове замовлення'}</DialogTitle>
         <DialogContent>
           <OrderForm
             products={products}
+            documentPool={documentPool}
             initialValue={editingOrder}
             submitting={submitting}
             onSubmit={handleSubmitOrder}
             onCancel={() => setFormOpen(false)}
+            onUploadDocument={handleUploadDocument}
           />
         </DialogContent>
       </Dialog>
