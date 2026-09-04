@@ -5,6 +5,7 @@ export interface DashboardResponse {
     product: { id: string; name: string };
     client: { id: string; name: string };
     quantity: number;
+    description: string;
     status: string;
     totals: { completed: number; needsRework: number; partiallyAssembled: number };
     remaining: number;

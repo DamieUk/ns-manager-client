@@ -41,6 +41,11 @@ export function DashboardOrderRow({ order, expanded, onToggle }: DashboardOrderR
       <TableRow>
         <TableCell colSpan={8} sx={{ py: 0, borderBottom: expanded ? undefined : 'none' }}>
           <Collapse in={expanded} timeout="auto" unmountOnExit>
+            {order.description && (
+              <Typography variant="body2" sx={{ mt: 2 }}>
+                {order.description}
+              </Typography>
+            )}
             <Typography variant="subtitle2" sx={{ mt: 2 }}>
               Щоденний прогрес
             </Typography>

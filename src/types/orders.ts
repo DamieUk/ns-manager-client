@@ -5,6 +5,7 @@ export interface OrderSummary {
   client: { id: string; name: string };
   product: { id: string; name: string };
   quantity: number;
+  description: string;
   status: string;
 }
 
@@ -29,6 +30,7 @@ export interface OrderInput {
   client: string;
   product: string;
   quantity: number;
+  description: string;
   status?: string;
   documents?: string[];
 }

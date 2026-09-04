@@ -219,6 +219,11 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
                       <TableCell colSpan={canModify ? 5 : 4} sx={{ py: 0, borderBottom: expanded ? undefined : 'none' }}>
                         <Collapse in={expanded} timeout="auto" unmountOnExit>
                           <Box sx={{ py: 2 }}>
+                            {order.description && (
+                              <Typography variant="body2" sx={{ mb: 2 }}>
+                                {order.description}
+                              </Typography>
+                            )}
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>
                               Документи замовлення
                             </Typography>

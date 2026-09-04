@@ -2,6 +2,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
 
 function NavButton({ to, children }: { to: string; children: ReactNode }) {
@@ -40,6 +41,7 @@ function MainLayout() {
             <>
               <NavButton to="/dashboard">Дашборд</NavButton>
               <NavButton to="/clients">Клієнти</NavButton>
+              {hasPermission(user, 'USERS', 'view') && <NavButton to="/users">Користувачі</NavButton>}
             </>
           )}
           {user.role === 'employee' && <NavButton to="/progress">Мій прогрес</NavButton>}

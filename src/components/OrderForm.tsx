@@ -10,6 +10,7 @@ const ORDER_STATUSES = ['active', 'completed', 'cancelled'] as const;
 export interface OrderFormValues {
   product: string;
   quantity: number;
+  description: string;
   status: string;
   documents: string[];
 }
@@ -18,6 +19,7 @@ function validate(values: OrderFormValues): Partial<Record<keyof OrderFormValues
   const errors: Partial<Record<keyof OrderFormValues, string>> = {};
   if (!values.product) errors.product = "Обов'язкове поле";
   if (!values.quantity || values.quantity < 1) errors.quantity = 'Має бути більше нуля';
+  if (!values.description.trim()) errors.description = "Обов'язкове поле";
   return errors;
 }
 
@@ -47,6 +49,7 @@ export function OrderForm({
     initialValues: {
       product: initialValue?.product.id ?? '',
       quantity: initialValue?.quantity ?? 1,
+      description: initialValue?.description ?? '',
       status: initialValue?.status ?? 'active',
       documents: initialValue?.documents.map((d) => d._id) ?? [],
     },
@@ -102,6 +105,19 @@ export function OrderForm({
         error={formik.touched.quantity && Boolean(formik.errors.quantity)}
         helperText={formik.touched.quantity && formik.errors.quantity}
         slotProps={{ htmlInput: { min: 1 } }}
+        required
+      />
+
+      <TextField
+        name="description"
+        label="Опис"
+        value={formik.values.description}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+        error={formik.touched.description && Boolean(formik.errors.description)}
+        helperText={formik.touched.description && formik.errors.description}
+        multiline
+        minRows={2}
         required
       />
 

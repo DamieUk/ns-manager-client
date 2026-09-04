@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { UsersPage } from './pages/UsersPage';
 import { ProtectedRoute } from './routing/ProtectedRoute';
 import { RoleHomeRedirect } from './routing/RoleHomeRedirect';
 
@@ -33,6 +34,10 @@ function App() {
           <Route element={<ProtectedRoute allow={['executive', 'manager']} permission={{ key: 'ORDERS', minAction: 'view' }} />}>
             <Route path="clients" element={<ClientsPage />} />
             <Route path="clients/:clientId" element={<ClientDetailPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allow={['executive', 'manager']} permission={{ key: 'USERS', minAction: 'view' }} />}>
+            <Route path="users" element={<UsersPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allow={['employee']} />}>
