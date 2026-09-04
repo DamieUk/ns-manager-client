@@ -40,7 +40,7 @@ export function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<TeamMember | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TeamMember | null>(null);
 
   function loadUsers() {
     setLoading(true);
@@ -82,10 +82,14 @@ export function UsersPage() {
   }
 
   async function handleDelete() {
-    if (!deleteTargetId) return;
+    if (!deleteTarget) return;
     try {
-      await apiClient.delete(`/users/${deleteTargetId}`);
-      setDeleteTargetId(null);
+      if (deleteTarget.status === 'deleted') {
+        await apiClient.delete(`/users/${deleteTarget.id}`);
+      } else {
+        await apiClient.put(`/users/${deleteTarget.id}`, { status: 'deleted' });
+      }
+      setDeleteTarget(null);
       loadUsers();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -140,7 +144,15 @@ export function UsersPage() {
                   <Chip
                     size="small"
                     label={STATUS_LABELS[u.status]}
-                    color={u.status === 'working' ? 'success' : u.status === 'vacation' ? 'warning' : 'default'}
+                    color={
+                      u.status === 'working'
+                        ? 'success'
+                        : u.status === 'vacation'
+                          ? 'warning'
+                          : u.status === 'deleted'
+                            ? 'error'
+                            : 'default'
+                    }
                   />
                 </TableCell>
                 {canModify && (
@@ -148,11 +160,7 @@ export function UsersPage() {
                     <IconButton size="small" onClick={() => openEdit(u)}>
                       <EditIcon fontSize="small" />
                     </IconButton>
-                    <IconButton
-                      size="small"
-                      disabled={u.id === currentUser?.id}
-                      onClick={() => setDeleteTargetId(u.id)}
-                    >
+                    <IconButton size="small" disabled={u.id === currentUser?.id} onClick={() => setDeleteTarget(u)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
@@ -182,11 +190,25 @@ export function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deleteTargetId !== null} onClose={() => setDeleteTargetId(null)}>
-        <DialogTitle>Видалити користувача?</DialogTitle>
-        <DialogContent>Цю дію неможливо скасувати.</DialogContent>
+      <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)}>
+        {deleteTarget?.status === 'deleted' ? (
+          <>
+            <DialogTitle>Видалити користувача назавжди?</DialogTitle>
+            <DialogContent>
+              Цю дію неможливо скасувати. Історія прогресу цього користувача теж буде видалена.
+            </DialogContent>
+          </>
+        ) : (
+          <>
+            <DialogTitle>Позначити користувача як видаленого?</DialogTitle>
+            <DialogContent>
+              Вхід для цього користувача буде заблоковано, але історія його прогресу залишиться. Пізніше його можна
+              відновити або видалити назавжди.
+            </DialogContent>
+          </>
+        )}
         <DialogActions>
-          <Button onClick={() => setDeleteTargetId(null)}>Скасувати</Button>
+          <Button onClick={() => setDeleteTarget(null)}>Скасувати</Button>
           <Button color="error" onClick={handleDelete}>
             Видалити
           </Button>

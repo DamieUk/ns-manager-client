@@ -1,6 +1,6 @@
 import type { Permission, Role } from './auth';
 
-export type UserStatus = 'working' | 'fired' | 'vacation';
+export type UserStatus = 'working' | 'fired' | 'vacation' | 'deleted';
 
 export interface TeamMember {
   id: string;

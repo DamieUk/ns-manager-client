@@ -71,6 +71,15 @@ export function DashboardOrderRow({ order, expanded, onToggle }: DashboardOrderR
                     <TableCell>{entry.notes}</TableCell>
                   </TableRow>
                 ))}
+                {order.entries.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <Typography color="text.secondary" variant="body2">
+                        Немає записів
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </Collapse>

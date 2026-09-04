@@ -11,4 +11,5 @@ export const STATUS_OPTIONS: Array<{ value: UserStatus; label: string }> = [
   { value: 'working', label: 'Працює' },
   { value: 'vacation', label: 'У відпустці' },
   { value: 'fired', label: 'Звільнений' },
+  { value: 'deleted', label: 'Видалено' },
 ];
