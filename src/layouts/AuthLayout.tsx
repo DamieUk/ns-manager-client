@@ -1,6 +1,6 @@
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { BLUE_DEPTH } from '../theme';
+import { FOREST } from '../theme';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -15,15 +15,14 @@ function AuthLayout({ children }: AuthLayoutProps) {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: BLUE_DEPTH,
-          borderRight: '1px solid rgba(184, 134, 11, 0.35)',
+          bgcolor: FOREST,
         }}
       >
         <Stack spacing={1.5} sx={{ textAlign: 'center', px: 6 }}>
-          <Typography variant="h3" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+          <Typography variant="h3" sx={{ fontWeight: 700, color: '#FFFFFF' }}>
             Numenor
           </Typography>
-          <Typography variant="body1" sx={{ color: '#f2ede3', opacity: 0.8 }}>
+          <Typography variant="body1" sx={{ color: '#DCEFE7', opacity: 0.9 }}>
             Керування виробництвом PCB — замовлення, клієнти та прогрес команди в одному місці.
           </Typography>
         </Stack>

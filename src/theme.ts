@@ -1,38 +1,46 @@
 import { createTheme } from '@mui/material/styles';
 
-const EMERALD = '#006D5B';
-const GOLD = '#B8860B';
-const BIKING_RED = '#800020';
-const BLUE_DEPTH = '#0D1B3D';
-const OBSIDIAN = '#111111';
-const PARCHMENT = '#F0E6C2';
+const FOREST = '#16433A';
+const FOREST_DARK = '#0E2E27';
+const FOREST_LIGHT = '#1F5C4E';
+const MINT = '#34C289';
+const MINT_TINT = '#E4F7ED';
+const PAGE_BG = '#F5F6F8';
+const SURFACE = '#FFFFFF';
+const INK = '#14171F';
+const INK_SOFT = '#6B7280';
+const LINE = '#ECEEF1';
+const CORAL = '#E0525C';
+
+const CARD_SHADOW = '0 1px 2px rgba(16,24,40,0.04), 0 6px 16px rgba(16,24,40,0.06)';
 
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: EMERALD, light: '#3d9483', dark: '#004d40', contrastText: '#fdfaf0' },
-    secondary: { main: GOLD, light: '#d1a53f', dark: '#8a6608', contrastText: '#1f1a12' },
-    error: { main: BIKING_RED },
-    background: { default: PARCHMENT, paper: '#fbf6e3' },
-    text: { primary: '#1f1a12', secondary: '#6b5f47' },
-    divider: 'rgba(184, 134, 11, 0.3)',
+    primary: { main: FOREST, light: FOREST_LIGHT, dark: FOREST_DARK, contrastText: '#FFFFFF' },
+    secondary: { main: MINT, light: MINT_TINT, dark: '#1F8F62', contrastText: FOREST_DARK },
+    error: { main: CORAL },
+    success: { main: MINT, light: MINT_TINT, dark: '#1F8F62' },
+    background: { default: PAGE_BG, paper: SURFACE },
+    text: { primary: INK, secondary: INK_SOFT },
+    divider: LINE,
   },
-  shape: { borderRadius: 10 },
+  shape: { borderRadius: 16 },
   typography: {
-    fontFamily: '"Shantell Sans", "Nunito", "Roboto", "Helvetica", "Arial", sans-serif',
-    h3: { fontWeight: 700 },
-    h4: { fontWeight: 700 },
+    fontFamily: '"Plus Jakarta Sans", "Inter", "Helvetica", "Arial", sans-serif',
+    h3: { fontWeight: 700, letterSpacing: '-0.02em' },
+    h4: { fontWeight: 700, letterSpacing: '-0.02em' },
     h5: { fontWeight: 700 },
     h6: { fontWeight: 700 },
-    button: { fontWeight: 700, textTransform: 'none' },
+    button: { fontWeight: 600, textTransform: 'none' },
   },
   components: {
     MuiPaper: {
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          border: '1px solid rgba(184, 134, 11, 0.3)',
-          boxShadow: 'none',
+          border: `1px solid ${LINE}`,
+          boxShadow: CARD_SHADOW,
         },
       },
     },
@@ -40,30 +48,43 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          backgroundColor: OBSIDIAN,
-          color: '#f2ede3',
-          borderBottom: `1px solid ${GOLD}`,
+          backgroundColor: SURFACE,
+          color: INK,
+          borderBottom: `1px solid ${LINE}`,
           boxShadow: 'none',
         },
       },
     },
     MuiButton: {
       styleOverrides: {
-        root: { boxShadow: 'none' },
+        root: { boxShadow: 'none', borderRadius: 10 },
         contained: {
           boxShadow: 'none',
           '&:hover': { boxShadow: 'none' },
         },
         outlined: {
-          borderColor: 'rgba(184, 134, 11, 0.6)',
+          borderColor: LINE,
         },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: { borderRadius: 10 },
       },
     },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
           borderRadius: 10,
-          backgroundColor: '#fffdf5',
+          backgroundColor: SURFACE,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 999,
+          fontWeight: 600,
         },
       },
     },
@@ -71,12 +92,19 @@ const theme = createTheme({
       styleOverrides: {
         head: {
           fontWeight: 700,
-          color: '#8a6608',
+          fontSize: '0.72rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          color: INK_SOFT,
+          borderBottom: `1px solid ${LINE}`,
+        },
+        body: {
+          borderBottom: `1px solid ${LINE}`,
         },
       },
     },
   },
 });
 
-export { EMERALD, GOLD, BIKING_RED, BLUE_DEPTH, OBSIDIAN, PARCHMENT };
+export { FOREST, FOREST_DARK, FOREST_LIGHT, MINT, MINT_TINT, PAGE_BG, SURFACE, INK, INK_SOFT, LINE, CORAL, CARD_SHADOW };
 export default theme;

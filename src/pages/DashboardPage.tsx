@@ -1,3 +1,7 @@
+import AssignmentLateOutlinedIcon from '@mui/icons-material/AssignmentLateOutlined';
+import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import PlaylistAddCheckOutlinedIcon from '@mui/icons-material/PlaylistAddCheckOutlined';
 import {
   Alert,
   CircularProgress,
@@ -17,6 +21,7 @@ import { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import { DashboardOrderRow } from '../components/DashboardOrderRow';
+import { StatCard } from '../components/StatCard';
 import type { DashboardResponse } from '../types/dashboard';
 import type { TeamMember } from '../types/users';
 
@@ -87,6 +92,32 @@ export function DashboardPage() {
       {error && <Alert severity="error">{error}</Alert>}
 
       {loading && <CircularProgress />}
+
+      {!loading && data && (
+        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 2, mb: 3 }}>
+          <StatCard
+            label="Активні замовлення"
+            value={data.orders.length}
+            icon={<Inventory2OutlinedIcon fontSize="small" sx={{ color: '#fff' }} />}
+            highlight
+          />
+          <StatCard
+            label="Протерміновано"
+            value={data.orders.filter((o) => o.isOverdue).length}
+            icon={<AssignmentLateOutlinedIcon fontSize="small" color="error" />}
+          />
+          <StatCard
+            label="Потребує виправлення"
+            value={data.orders.reduce((sum, o) => sum + o.totals.needsRework, 0)}
+            icon={<BuildOutlinedIcon fontSize="small" color="action" />}
+          />
+          <StatCard
+            label="Залишилось плат"
+            value={data.orders.reduce((sum, o) => sum + o.remaining, 0)}
+            icon={<PlaylistAddCheckOutlinedIcon fontSize="small" color="action" />}
+          />
+        </Stack>
+      )}
 
       {!loading && data && (
         <TableContainer component={Paper}>
