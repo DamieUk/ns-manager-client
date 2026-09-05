@@ -3,6 +3,7 @@ import { useFormik } from 'formik';
 import { useState } from 'react';
 import type { ClientDocument } from '../types/clients';
 import type { OrderDetail, Product } from '../types/orders';
+import type { TeamMember } from '../types/users';
 import { FileDropzone } from './FileDropzone';
 
 const ORDER_STATUSES = ['active', 'completed', 'cancelled'] as const;
@@ -12,6 +13,8 @@ export interface OrderFormValues {
   quantity: number;
   description: string;
   status: string;
+  manager: string;
+  assignedEmployees: string[];
   documents: string[];
 }
 
@@ -26,6 +29,8 @@ function validate(values: OrderFormValues): Partial<Record<keyof OrderFormValues
 interface OrderFormProps {
   products: Product[];
   documentPool: ClientDocument[];
+  managers: TeamMember[];
+  employees: TeamMember[];
   initialValue?: OrderDetail | null;
   submitting: boolean;
   onSubmit: (values: OrderFormValues) => void;
@@ -36,6 +41,8 @@ interface OrderFormProps {
 export function OrderForm({
   products,
   documentPool,
+  managers,
+  employees,
   initialValue,
   submitting,
   onSubmit,
@@ -51,6 +58,8 @@ export function OrderForm({
       quantity: initialValue?.quantity ?? 1,
       description: initialValue?.description ?? '',
       status: initialValue?.status ?? 'active',
+      manager: initialValue?.manager?.id ?? '',
+      assignedEmployees: initialValue?.assignedEmployees.map((e) => e.id) ?? [],
       documents: initialValue?.documents.map((d) => d._id) ?? [],
     },
     validate,
@@ -130,6 +139,30 @@ export function OrderForm({
           ))}
         </TextField>
       )}
+
+      <TextField select name="manager" label="Менеджер" value={formik.values.manager} onChange={formik.handleChange}>
+        <MenuItem value="">Без менеджера</MenuItem>
+        {managers.map((m) => (
+          <MenuItem key={m.id} value={m.id}>
+            {m.firstName} {m.lastName}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <Autocomplete
+        multiple
+        options={employees}
+        getOptionLabel={(e) => `${e.firstName} ${e.lastName}`}
+        isOptionEqualToValue={(a, b) => a.id === b.id}
+        value={employees.filter((e) => formik.values.assignedEmployees.includes(e.id))}
+        onChange={(_, selected) =>
+          formik.setFieldValue(
+            'assignedEmployees',
+            selected.map((e) => e.id)
+          )
+        }
+        renderInput={(params) => <TextField {...params} label="Працівники на замовленні" placeholder="Оберіть..." />}
+      />
 
       <Autocomplete
         multiple

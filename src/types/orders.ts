@@ -7,6 +7,8 @@ export interface OrderSummary {
   quantity: number;
   description: string;
   status: string;
+  manager: { id: string; name: string } | null;
+  assignedEmployees: Array<{ id: string; name: string }>;
 }
 
 export interface OrderDetail extends OrderSummary {
@@ -32,5 +34,7 @@ export interface OrderInput {
   quantity: number;
   description: string;
   status?: string;
+  manager?: string | null;
+  assignedEmployees?: string[];
   documents?: string[];
 }

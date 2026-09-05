@@ -1,12 +1,24 @@
+export type ClientStatus = 'active' | 'deleted';
+
 export interface Client {
   _id: string;
   name: string;
   code: string;
+  status: ClientStatus;
   contactName?: string;
   email?: string;
   phone?: string;
   address?: string;
   notes?: string;
+}
+
+export interface ClientInput {
+  name: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
 }
 
 export interface ClientDocument {

@@ -1,4 +1,7 @@
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import RestoreIcon from '@mui/icons-material/Restore';
 import {
   Accordion,
   AccordionDetails,
@@ -8,8 +11,10 @@ import {
   Chip,
   CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -23,7 +28,8 @@ import { getErrorMessage } from '../api/errors';
 import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
 import { CreateClientForm, type CreateClientFormValues } from '../components/CreateClientForm';
-import type { Client } from '../types/clients';
+import { EditClientForm } from '../components/EditClientForm';
+import type { Client, ClientInput } from '../types/clients';
 import type { OrderSummary } from '../types/orders';
 
 type OrdersState = 'loading' | OrderSummary[] | 'error';
@@ -37,6 +43,8 @@ export function ClientsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [ordersByClient, setOrdersByClient] = useState<Record<string, OrdersState>>({});
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
 
   function loadClients() {
     setLoading(true);
@@ -84,6 +92,46 @@ export function ClientsPage() {
     }
   }
 
+  async function handleEdit(values: ClientInput) {
+    if (!editingClient) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiClient.put(`/clients/${editingClient._id}`, values);
+      setEditingClient(null);
+      loadClients();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleRestore(client: Client) {
+    setError(null);
+    try {
+      await apiClient.put(`/clients/${client._id}`, { status: 'active' });
+      loadClients();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      if (deleteTarget.status === 'deleted') {
+        await apiClient.delete(`/clients/${deleteTarget._id}`);
+      } else {
+        await apiClient.put(`/clients/${deleteTarget._id}`, { status: 'deleted' });
+      }
+      setDeleteTarget(null);
+      loadClients();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   if (loading) return <CircularProgress />;
 
   const canModify = hasPermission(user, 'ORDERS', 'modify');
@@ -120,18 +168,57 @@ export function ClientsPage() {
                   <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                     <Typography sx={{ fontWeight: 700 }}>{client.name}</Typography>
                     {client.code && <Chip size="small" label={client.code} />}
+                    {client.status === 'deleted' && <Chip size="small" color="error" label="Видалено" />}
                   </Stack>
-                  <Button
-                    component="span"
-                    size="small"
-                    variant="outlined"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/clients/${client._id}`);
-                    }}
-                  >
-                    Детальніше
-                  </Button>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <Button
+                      component="span"
+                      size="small"
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/clients/${client._id}`);
+                      }}
+                    >
+                      Детальніше
+                    </Button>
+                    {canModify && client.status === 'deleted' && (
+                      <IconButton
+                        component="span"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRestore(client);
+                        }}
+                      >
+                        <RestoreIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    {canModify && client.status !== 'deleted' && (
+                      <IconButton
+                        component="span"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingClient(client);
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    {canModify && (
+                      <IconButton
+                        component="span"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget(client);
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Stack>
                 </Stack>
               </AccordionSummary>
               <AccordionDetails>
@@ -163,6 +250,46 @@ export function ClientsPage() {
         <DialogContent>
           <CreateClientForm submitting={submitting} onSubmit={handleCreate} onCancel={() => setDialogOpen(false)} />
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={editingClient !== null} onClose={() => setEditingClient(null)}>
+        <DialogTitle>Редагувати клієнта</DialogTitle>
+        <DialogContent>
+          {editingClient && (
+            <EditClientForm
+              client={editingClient}
+              submitting={submitting}
+              onSubmit={handleEdit}
+              onCancel={() => setEditingClient(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)}>
+        {deleteTarget?.status === 'deleted' ? (
+          <>
+            <DialogTitle>Видалити клієнта назавжди?</DialogTitle>
+            <DialogContent>
+              Цю дію неможливо скасувати. Усі замовлення, продукти, контракти та документи цього клієнта теж будуть
+              видалені.
+            </DialogContent>
+          </>
+        ) : (
+          <>
+            <DialogTitle>Позначити клієнта як видаленого?</DialogTitle>
+            <DialogContent>
+              Клієнт зникне з активного використання, але всі його замовлення, продукти, контракти та документи
+              залишаться. Пізніше його можна відновити або видалити назавжди.
+            </DialogContent>
+          </>
+        )}
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)}>Скасувати</Button>
+          <Button color="error" onClick={handleDelete}>
+            Видалити
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

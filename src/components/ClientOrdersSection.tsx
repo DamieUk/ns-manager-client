@@ -28,6 +28,7 @@ import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import type { ClientDocument } from '../types/clients';
 import type { OrderDetail, OrderSummary, Product } from '../types/orders';
+import type { TeamMember } from '../types/users';
 import { DocumentList } from './DocumentList';
 import { OrderForm, type OrderFormValues } from './OrderForm';
 
@@ -45,6 +46,8 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [managers, setManagers] = useState<TeamMember[]>([]);
+  const [employees, setEmployees] = useState<TeamMember[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [detailsById, setDetailsById] = useState<Record<string, OrderDetailState>>({});
   const [formOpen, setFormOpen] = useState(false);
@@ -66,6 +69,19 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
   useEffect(() => {
     apiClient.get<Product[]>('/products', { params: { client: clientId } }).then((res) => setProducts(res.data));
   }, [clientId]);
+
+  useEffect(() => {
+    apiClient
+      .get<TeamMember[]>('/users')
+      .then((res) => {
+        setManagers(res.data.filter((u) => u.role === 'executive' || u.role === 'manager'));
+        setEmployees(res.data.filter((u) => u.role === 'employee'));
+      })
+      .catch(() => {
+        setManagers([]);
+        setEmployees([]);
+      });
+  }, []);
 
   function loadOrderDetail(orderId: string) {
     setDetailsById((prev) => ({ ...prev, [orderId]: 'loading' }));
@@ -224,6 +240,15 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
                                 {order.description}
                               </Typography>
                             )}
+                            <Typography variant="body2" sx={{ mb: 0.5 }}>
+                              Менеджер: {order.manager?.name ?? '—'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 2 }}>
+                              Працівники:{' '}
+                              {order.assignedEmployees.length > 0
+                                ? order.assignedEmployees.map((e) => e.name).join(', ')
+                                : '—'}
+                            </Typography>
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>
                               Документи замовлення
                             </Typography>
@@ -261,6 +286,8 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
           <OrderForm
             products={products}
             documentPool={documentPool}
+            managers={managers}
+            employees={employees}
             initialValue={editingOrder}
             submitting={submitting}
             onSubmit={handleSubmitOrder}

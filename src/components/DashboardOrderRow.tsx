@@ -46,6 +46,12 @@ export function DashboardOrderRow({ order, expanded, onToggle }: DashboardOrderR
                 {order.description}
               </Typography>
             )}
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              Менеджер: {order.manager?.name ?? '—'}
+            </Typography>
+            <Typography variant="body2">
+              Працівники: {order.assignedEmployees.length > 0 ? order.assignedEmployees.map((e) => e.name).join(', ') : '—'}
+            </Typography>
             <Typography variant="subtitle2" sx={{ mt: 2 }}>
               Щоденний прогрес
             </Typography>
