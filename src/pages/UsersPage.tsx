@@ -1,5 +1,6 @@
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import {
   Alert,
   Button,
@@ -25,6 +26,7 @@ import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
+import { SetPasswordDialog } from '../components/SetPasswordDialog';
 import { UserForm } from '../components/UserForm';
 import { ROLE_OPTIONS, STATUS_OPTIONS } from '../constants/users';
 import type { UserInput, TeamMember } from '../types/users';
@@ -41,6 +43,7 @@ export function UsersPage() {
   const [editingUser, setEditingUser] = useState<TeamMember | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TeamMember | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<TeamMember | null>(null);
 
   function loadUsers() {
     setLoading(true);
@@ -160,6 +163,9 @@ export function UsersPage() {
                     <IconButton size="small" onClick={() => openEdit(u)}>
                       <EditIcon fontSize="small" />
                     </IconButton>
+                    <IconButton size="small" title="Скинути пароль" onClick={() => setPasswordTarget(u)}>
+                      <VpnKeyIcon fontSize="small" />
+                    </IconButton>
                     <IconButton size="small" disabled={u.id === currentUser?.id} onClick={() => setDeleteTarget(u)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -214,6 +220,8 @@ export function UsersPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <SetPasswordDialog user={passwordTarget} onClose={() => setPasswordTarget(null)} />
     </>
   );
 }
