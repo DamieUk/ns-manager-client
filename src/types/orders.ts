@@ -7,6 +7,7 @@ export interface OrderSummary {
   quantity: number;
   description: string;
   status: string;
+  dueDate: string | null;
   manager: { id: string; name: string } | null;
   assignedEmployees: Array<{ id: string; name: string }>;
 }
@@ -34,6 +35,7 @@ export interface OrderInput {
   quantity: number;
   description: string;
   status?: string;
+  dueDate?: string | null;
   manager?: string | null;
   assignedEmployees?: string[];
   documents?: string[];

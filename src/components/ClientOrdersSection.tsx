@@ -240,6 +240,17 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
                                 {order.description}
                               </Typography>
                             )}
+                            <Typography
+                              variant="body2"
+                              sx={{ mb: 0.5 }}
+                              color={
+                                order.dueDate && order.status === 'active' && new Date(order.dueDate) < new Date()
+                                  ? 'error'
+                                  : undefined
+                              }
+                            >
+                              Термін виконання: {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '—'}
+                            </Typography>
                             <Typography variant="body2" sx={{ mb: 0.5 }}>
                               Менеджер: {order.manager?.name ?? '—'}
                             </Typography>

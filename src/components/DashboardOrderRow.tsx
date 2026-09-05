@@ -1,5 +1,6 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
+  Chip,
   Collapse,
   IconButton,
   Table,
@@ -32,6 +33,10 @@ export function DashboardOrderRow({ order, expanded, onToggle }: DashboardOrderR
         </TableCell>
         <TableCell>{order.client.name}</TableCell>
         <TableCell>{order.product.name}</TableCell>
+        <TableCell>
+          {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '—'}
+          {order.isOverdue && <Chip size="small" color="error" label="Протерміновано" sx={{ ml: 1 }} />}
+        </TableCell>
         <TableCell align="right">{order.quantity}</TableCell>
         <TableCell align="right">{order.remaining}</TableCell>
         <TableCell align="right">{order.totals.completed}</TableCell>
@@ -39,7 +44,7 @@ export function DashboardOrderRow({ order, expanded, onToggle }: DashboardOrderR
         <TableCell align="right">{order.totals.partiallyAssembled}</TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={8} sx={{ py: 0, borderBottom: expanded ? undefined : 'none' }}>
+        <TableCell colSpan={9} sx={{ py: 0, borderBottom: expanded ? undefined : 'none' }}>
           <Collapse in={expanded} timeout="auto" unmountOnExit>
             {order.description && (
               <Typography variant="body2" sx={{ mt: 2 }}>

@@ -7,6 +7,8 @@ export interface DashboardResponse {
     quantity: number;
     description: string;
     status: string;
+    dueDate: string | null;
+    isOverdue: boolean;
     manager: { id: string; name: string } | null;
     assignedEmployees: Array<{ id: string; name: string }>;
     totals: { completed: number; needsRework: number; partiallyAssembled: number };

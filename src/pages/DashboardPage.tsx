@@ -96,6 +96,7 @@ export function DashboardPage() {
                 <TableCell />
                 <TableCell>Клієнт</TableCell>
                 <TableCell>Продукт</TableCell>
+                <TableCell>Термін виконання</TableCell>
                 <TableCell align="right">К-сть</TableCell>
                 <TableCell align="right">Залишилось</TableCell>
                 <TableCell align="right">Готово</TableCell>

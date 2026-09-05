@@ -7,6 +7,7 @@ import { ClientsPage } from './pages/ClientsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
+import { MyOrdersPage } from './pages/MyOrdersPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -42,6 +43,7 @@ function App() {
 
           <Route element={<ProtectedRoute allow={['employee']} />}>
             <Route path="progress" element={<ProgressPage />} />
+            <Route path="my-orders" element={<MyOrdersPage />} />
           </Route>
         </Route>
       </Route>

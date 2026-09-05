@@ -1,3 +1,5 @@
+import type { ClientDocument } from './clients';
+
 export interface DailyProgress {
   id: string;
   order: {
@@ -11,13 +13,13 @@ export interface DailyProgress {
   needsRework: number;
   partiallyAssembled: number;
   notes: string;
+  photo: ClientDocument | null;
 }
 
 export interface DailyProgressInput {
   order: string;
-  date: string;
   completed: number;
   needsRework: number;
-  partiallyAssembled: number;
   notes: string;
+  photo?: File | null;
 }

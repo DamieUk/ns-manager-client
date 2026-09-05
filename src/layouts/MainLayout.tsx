@@ -44,7 +44,12 @@ function MainLayout() {
               {hasPermission(user, 'USERS', 'view') && <NavButton to="/users">Користувачі</NavButton>}
             </>
           )}
-          {user.role === 'employee' && <NavButton to="/progress">Мій прогрес</NavButton>}
+          {user.role === 'employee' && (
+            <>
+              <NavButton to="/progress">Мій прогрес</NavButton>
+              <NavButton to="/my-orders">Мої замовлення</NavButton>
+            </>
+          )}
 
           <Avatar
             src={user.avatarUrl ?? undefined}

@@ -13,6 +13,7 @@ export interface OrderFormValues {
   quantity: number;
   description: string;
   status: string;
+  dueDate: string;
   manager: string;
   assignedEmployees: string[];
   documents: string[];
@@ -58,6 +59,7 @@ export function OrderForm({
       quantity: initialValue?.quantity ?? 1,
       description: initialValue?.description ?? '',
       status: initialValue?.status ?? 'active',
+      dueDate: initialValue?.dueDate?.slice(0, 10) ?? '',
       manager: initialValue?.manager?.id ?? '',
       assignedEmployees: initialValue?.assignedEmployees.map((e) => e.id) ?? [],
       documents: initialValue?.documents.map((d) => d._id) ?? [],
@@ -139,6 +141,15 @@ export function OrderForm({
           ))}
         </TextField>
       )}
+
+      <TextField
+        type="date"
+        name="dueDate"
+        label="Термін виконання"
+        value={formik.values.dueDate}
+        onChange={formik.handleChange}
+        slotProps={{ inputLabel: { shrink: true } }}
+      />
 
       <TextField select name="manager" label="Менеджер" value={formik.values.manager} onChange={formik.handleChange}>
         <MenuItem value="">Без менеджера</MenuItem>
