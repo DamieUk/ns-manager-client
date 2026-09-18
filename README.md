@@ -1,6 +1,6 @@
 # Numenor Client
 
-React + Vite + Material UI (MUI) + React Router.
+React + Vite + Material UI (MUI) + React Router, TypeScript.
 
 ## Розробка
 
@@ -14,17 +14,29 @@ npm run dev                  # http://localhost:5173
 
 ```
 src/
-  main.jsx            # entrypoint: ThemeProvider, CssBaseline, BrowserRouter
-  App.jsx             # оголошення маршрутів
-  theme.js            # MUI тема
-  layouts/            # спільні лейаути (AppBar + навігація)
-  pages/              # сторінки-маршрути
-  components/         # перевикористовувані компоненти
-  api/client.js        # axios-інстанс, base URL з VITE_API_URL
+  main.tsx             # entrypoint: ThemeProvider, CssBaseline, BrowserRouter
+  App.tsx              # оголошення маршрутів
+  theme.ts             # MUI тема
+  auth/                # AuthContext/Provider, дозволи, зберігання токена
+  layouts/             # MainLayout (сайдбар), AuthLayout
+  pages/               # сторінки-маршрути
+  components/          # перевикористовувані компоненти
+  routing/             # ProtectedRoute, роль-based редіректи
+  types/               # TS-типи відповідей API
+  api/client.ts        # axios-інстанс, base URL з VITE_API_URL
 ```
 
-## Маршрути
+## Деплой на Render (Static Site)
 
-- `/` — Home (з перевіркою доступності бекенду через `GET /api/health`)
-- `/about` — About
-- `*` — 404
+Репозиторій містить `render.yaml` (Blueprint) з SPA-роутингом (усі шляхи віддають `index.html`,
+щоб працював react-router на прямих посиланнях типу `/clients/123`).
+
+1. Бекенд має бути задеплоєний першим (дивись README бекенду) — знадобиться його URL.
+2. Запушити цей репозиторій у свій GitHub-акаунт.
+3. Render → New → Blueprint → обрати репозиторій → Render прочитає `render.yaml`.
+4. Ввести значення `VITE_API_URL` — `https://<backend-service>.onrender.com/api` (з кроку 1).
+   Це build-time змінна: Vite вшиває її у бандл під час `npm run build`, тож зміна значення
+   вимагає повторного деплою.
+5. Deploy — після збірки клієнт буде на `https://<client-service>.onrender.com`.
+6. Повернутися до бекенду і виставити його `CLIENT_ORIGIN` на цю саму адресу (для CORS —
+   Google-вхід не потребує окремого налаштування на боці клієнта, бекенд сам робить редірект).
