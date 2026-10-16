@@ -3,6 +3,10 @@
 :80 {
 	root * /srv
 
+	# .htaccess is only for Apache/LiteSpeed hosting; don't serve dotfiles here.
+	@dotfiles path /.*
+	respond @dotfiles 404
+
 	@assets path /assets/*
 	header @assets Cache-Control "public, max-age=31536000, immutable"
 
