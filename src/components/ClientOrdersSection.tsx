@@ -74,7 +74,7 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
     apiClient
       .get<TeamMember[]>('/users')
       .then((res) => {
-        setManagers(res.data.filter((u) => u.role === 'executive' || u.role === 'manager'));
+        setManagers(res.data.filter((u) => u.role === 'executive'));
         setEmployees(res.data.filter((u) => u.role === 'employee'));
       })
       .catch(() => {
@@ -252,7 +252,7 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
                               Термін виконання: {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '—'}
                             </Typography>
                             <Typography variant="body2" sx={{ mb: 0.5 }}>
-                              Менеджер: {order.manager?.name ?? '—'}
+                              Відповідальний: {order.manager?.name ?? '—'}
                             </Typography>
                             <Typography variant="body2" sx={{ mb: 2 }}>
                               Працівники:{' '}

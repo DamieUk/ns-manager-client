@@ -22,20 +22,20 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      <Route element={<ProtectedRoute allow={['executive', 'manager', 'employee']} />}>
+      <Route element={<ProtectedRoute allow={['executive', 'employee']} />}>
         <Route element={<MainLayout />}>
           <Route index element={<RoleHomeRedirect />} />
 
-          <Route element={<ProtectedRoute allow={['executive', 'manager']} />}>
+          <Route element={<ProtectedRoute allow={['executive']} />}>
             <Route path="dashboard" element={<DashboardPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute allow={['executive', 'manager']} permission={{ key: 'ORDERS', minAction: 'view' }} />}>
+          <Route element={<ProtectedRoute allow={['executive']} permission={{ key: 'ORDERS', minAction: 'view' }} />}>
             <Route path="clients" element={<ClientsPage />} />
             <Route path="clients/:clientId" element={<ClientDetailPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute allow={['executive', 'manager']} permission={{ key: 'USERS', minAction: 'view' }} />}>
+          <Route element={<ProtectedRoute allow={['executive']} permission={{ key: 'USERS', minAction: 'view' }} />}>
             <Route path="users" element={<UsersPage />} />
           </Route>
 

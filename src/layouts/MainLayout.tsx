@@ -48,7 +48,7 @@ function MainLayout() {
 
   if (!user) return null;
 
-  const isManagement = user.role === 'executive' || user.role === 'manager';
+  const isManagement = user.role === 'executive';
 
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>

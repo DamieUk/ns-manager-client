@@ -1,4 +1,4 @@
-export type Role = 'executive' | 'manager' | 'employee';
+export type Role = 'executive' | 'employee';
 export type PermissionKey = 'ORDERS' | 'USERS' | 'PRODUCTS';
 export type PermissionAction = 'none' | 'view' | 'modify';
 

@@ -151,7 +151,7 @@ export function OrderForm({
         slotProps={{ inputLabel: { shrink: true } }}
       />
 
-      <TextField select name="manager" label="Менеджер" value={formik.values.manager} onChange={formik.handleChange}>
+      <TextField select name="manager" label="Відповідальний" value={formik.values.manager} onChange={formik.handleChange}>
         <MenuItem value="">Без менеджера</MenuItem>
         {managers.map((m) => (
           <MenuItem key={m.id} value={m.id}>
