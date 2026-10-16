@@ -1,38 +1,26 @@
-import { Alert, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
-import { useState, type FormEvent } from 'react';
+import { Alert, Typography } from '@mui/material';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import AuthSuccessPanel from '../components/AuthSuccessPanel';
+import { NewPasswordForm } from '../components/NewPasswordForm';
 import AuthLayout from '../layouts/AuthLayout';
 import type { MessageResponse } from '../types/auth';
 
 export function AcceptInvitePage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(password: string) {
     setError(null);
-
-    if (password !== confirmPassword) {
-      setError('Паролі не збігаються');
-      return;
-    }
-
-    setSubmitting(true);
     try {
       await apiClient.post<MessageResponse>('/auth/accept-invite', { token, password });
       setSuccess(true);
     } catch (err) {
       setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -72,27 +60,7 @@ export function AcceptInvitePage() {
         </Alert>
       )}
 
-      <Stack component="form" spacing={2} onSubmit={handleSubmit}>
-        <TextField
-          label="Новий пароль"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          fullWidth
-        />
-        <TextField
-          label="Підтвердіть пароль"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          fullWidth
-        />
-        <Button type="submit" variant="contained" fullWidth disabled={submitting}>
-          {submitting ? <CircularProgress size={22} color="inherit" /> : 'Активувати'}
-        </Button>
-      </Stack>
+      <NewPasswordForm submitLabel="Активувати" onSubmit={handleSubmit} />
     </AuthLayout>
   );
 }

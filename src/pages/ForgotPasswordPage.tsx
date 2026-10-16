@@ -1,26 +1,35 @@
 import { Button, CircularProgress, Link as MuiLink, Stack, TextField, Typography } from '@mui/material';
-import { useState, type FormEvent } from 'react';
+import { useFormik } from 'formik';
+import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../api/client';
 import AuthSuccessPanel from '../components/AuthSuccessPanel';
 import AuthLayout from '../layouts/AuthLayout';
 import type { MessageResponse } from '../types/auth';
+import { fieldProps, REQUIRED } from '../utils/formik';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await apiClient.post<MessageResponse>('/auth/forgot-password', { email });
-    } finally {
-      setSubmitting(false);
+  const formik = useFormik<{ email: string }>({
+    initialValues: { email: '' },
+    validate: (v) => {
+      if (!v.email.trim()) return { email: REQUIRED };
+      if (!EMAIL_PATTERN.test(v.email.trim())) return { email: 'Некоректний email' };
+      return {};
+    },
+    // The answer is the same whether or not the email exists, so it never reveals accounts.
+    onSubmit: async (v) => {
+      try {
+        await apiClient.post<MessageResponse>('/auth/forgot-password', { email: v.email.trim() });
+      } catch {
+        // Shown the same way: the page never tells whether the email is known.
+      }
       setSuccess(true);
-    }
-  }
+    },
+  });
 
   if (success) {
     return (
@@ -44,17 +53,10 @@ export function ForgotPasswordPage() {
         Введіть email — ми надішлемо посилання для скидання пароля
       </Typography>
 
-      <Stack component="form" spacing={2} onSubmit={handleSubmit}>
-        <TextField
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          fullWidth
-        />
-        <Button type="submit" variant="contained" fullWidth disabled={submitting}>
-          {submitting ? <CircularProgress size={22} color="inherit" /> : 'Надіслати посилання'}
+      <Stack component="form" noValidate spacing={2} onSubmit={formik.handleSubmit}>
+        <TextField label="Email" type="email" autoComplete="email" {...fieldProps(formik, 'email')} required fullWidth />
+        <Button type="submit" variant="contained" fullWidth disabled={formik.isSubmitting}>
+          {formik.isSubmitting ? <CircularProgress size={22} color="inherit" /> : 'Надіслати посилання'}
         </Button>
       </Stack>
 

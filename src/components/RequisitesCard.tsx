@@ -1,11 +1,10 @@
 import EditIcon from '@mui/icons-material/EditOutlined';
-import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../api/client';
-import { getErrorMessage } from '../api/errors';
 import { REQUISITE_FIELDS } from '../constants/documents';
 import type { Client, ClientInput } from '../types/clients';
-import { EditClientForm } from './EditClientForm';
+import { EditClientDialog } from './ClientDialogs';
 
 interface RequisitesCardProps {
   client: Client;
@@ -16,22 +15,12 @@ interface RequisitesCardProps {
 // Client's requisites as they'll appear on invoices and delivery notes.
 export function RequisitesCard({ client, canModify, onSaved }: RequisitesCardProps) {
   const [editing, setEditing] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const filled = REQUISITE_FIELDS.filter((f) => client[f.name]).length;
 
   async function handleSubmit(values: ClientInput) {
-    setSubmitting(true);
-    setError(null);
-    try {
-      await apiClient.put(`/clients/${client._id}`, values);
-      setEditing(false);
-      onSaved();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+    await apiClient.put(`/clients/${client._id}`, values);
+    setEditing(false);
+    onSaved();
   }
 
   return (
@@ -47,10 +36,7 @@ export function RequisitesCard({ client, canModify, onSaved }: RequisitesCardPro
           <Button
             size="small"
             startIcon={<EditIcon />}
-            onClick={() => {
-              setError(null);
-              setEditing(true);
-            }}
+            onClick={() => setEditing(true)}
           >
             Редагувати
           </Button>
@@ -69,17 +55,7 @@ export function RequisitesCard({ client, canModify, onSaved }: RequisitesCardPro
         ))}
       </Box>
 
-      <Dialog open={editing} onClose={() => setEditing(false)}>
-        <DialogTitle>Редагувати клієнта</DialogTitle>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mt: 1 }}>
-              {error}
-            </Alert>
-          )}
-          <EditClientForm client={client} submitting={submitting} onSubmit={handleSubmit} onCancel={() => setEditing(false)} requisitesExpanded />
-        </DialogContent>
-      </Dialog>
+      {editing && <EditClientDialog client={client} onSubmit={handleSubmit} onClose={() => setEditing(false)} />}
     </Paper>
   );
 }

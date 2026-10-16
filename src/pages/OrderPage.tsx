@@ -25,10 +25,12 @@ import { getErrorMessage } from '../api/errors';
 import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
 import { BatchAnnexCard } from '../components/BatchAnnexCard';
+import { BatchInvoicesCard } from '../components/BatchInvoicesCard';
+import { BatchPurchasesCard } from '../components/BatchPurchasesCard';
 import { BatchPriceCard } from '../components/BatchPriceCard';
 import { BatchStageCard } from '../components/BatchStageCard';
 import { DocumentList } from '../components/DocumentList';
-import { OrderForm, type OrderFormValues } from '../components/OrderForm';
+import { OrderDialog, type OrderFormValues } from '../components/OrderDialog';
 import { StageChip } from '../components/StageChip';
 import { StageHistory } from '../components/StageHistory';
 import type { ClientDocument, DocumentType } from '../types/clients';
@@ -79,7 +81,6 @@ export function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editData, setEditData] = useState<EditData | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -125,17 +126,11 @@ export function OrderPage() {
     return res.data;
   }
 
+  // Errors propagate to the dialog, which shows them.
   async function handleSubmit(values: OrderFormValues) {
-    setSubmitting(true);
-    try {
-      await apiClient.put(`/orders/${order!.id}`, values);
-      setEditData(null);
-      load();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+    await apiClient.put(`/orders/${order!.id}`, values);
+    setEditData(null);
+    load();
   }
 
   async function handleDelete() {
@@ -242,6 +237,8 @@ export function OrderPage() {
           <Stack spacing={2.5}>
             {isOwner && <BatchPriceCard order={order} canModify={isOwner} onSaved={load} />}
             {isOwner && <BatchAnnexCard order={order} canModify={canModify} onChanged={load} onError={setError} />}
+            {isOwner && <BatchInvoicesCard order={order} onChanged={load} onError={setError} />}
+            {isOwner && <BatchPurchasesCard order={order} onChanged={load} onError={setError} />}
 
             <Paper sx={{ p: 2.5 }}>
               <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
@@ -318,24 +315,18 @@ export function OrderPage() {
         </Box>
       </Stack>
 
-      <Dialog open={editData !== null} onClose={() => setEditData(null)}>
-        <DialogTitle>Партія № {order.number}</DialogTitle>
-        <DialogContent>
-          {editData && (
-            <OrderForm
-              products={editData.products}
-              documentPool={editData.documents}
-              managers={editData.managers}
-              employees={editData.employees}
-              initialValue={order}
-              submitting={submitting}
-              onSubmit={handleSubmit}
-              onCancel={() => setEditData(null)}
-              onUploadDocument={(file) => uploadDocument(file)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {editData && (
+        <OrderDialog
+          products={editData.products}
+          documentPool={editData.documents}
+          managers={editData.managers}
+          employees={editData.employees}
+          initialValue={order}
+          onSubmit={handleSubmit}
+          onClose={() => setEditData(null)}
+          onUploadDocument={(file) => uploadDocument(file)}
+        />
+      )}
 
       <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
         <DialogTitle>Видалити партію № {order.number}?</DialogTitle>

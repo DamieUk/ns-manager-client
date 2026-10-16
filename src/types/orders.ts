@@ -1,4 +1,5 @@
 import type { ClientDocument, Contract } from './clients';
+import type { BatchPayments, Invoice, Purchase } from './finance';
 
 export type OrderStage =
   | 'quote'
@@ -17,7 +18,8 @@ export type Currency = 'USD' | 'EUR' | 'UAH';
 
 type Person = { id: string; name: string };
 
-// A batch (партія). Prices, the next stage and its blockers come only for owners.
+// A batch (партія). Prices (per board, without VAT), the next stage and its blockers come only
+// for owners; `total` is quantity × unitPrice.
 export interface OrderSummary {
   id: string;
   number: string;
@@ -33,10 +35,11 @@ export interface OrderSummary {
   manager: Person | null;
   assignedEmployees: Person[];
   createdAt: string;
-  quoteAmount?: number | null;
+  unitQuote?: number | null;
   quoteCurrency?: Currency | null;
   exchangeRate?: number | null;
-  priceUah?: number | null;
+  unitPrice?: number | null;
+  total?: number | null;
   priceLocked?: boolean;
   nextStage?: OrderStage | null;
   blockers?: string[];
@@ -56,6 +59,9 @@ export interface OrderDetail extends OrderSummary {
   progress: { completed: number; needsRework: number; partiallyAssembled: number; remaining: number };
   history: StageEvent[];
   annexes?: Contract[];
+  invoices?: Invoice[];
+  payments?: BatchPayments;
+  purchases?: Purchase[];
 }
 
 export type ProductType = 'PCB' | 'Component' | 'Other';
@@ -83,8 +89,8 @@ export interface OrderInput {
 }
 
 export interface PriceInput {
-  quoteAmount: number | null;
+  unitQuote: number | null;
   quoteCurrency: Currency | null;
   exchangeRate: number | null;
-  priceUah: number | null;
+  unitPrice: number | null;
 }

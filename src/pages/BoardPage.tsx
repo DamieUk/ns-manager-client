@@ -67,9 +67,9 @@ function BatchCard({ order, onOpen }: { order: OrderSummary; onOpen: () => void 
           {order.dueDate ? `до ${formatDate(order.dueDate)}` : daysSince(order.stageChangedAt)}
         </Typography>
       </Stack>
-      {order.priceUah != null && (
+      {order.total != null && (
         <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, mt: 0.25 }}>
-          {formatMoney(order.priceUah)}
+          {formatMoney(order.total)} без ПДВ
         </Typography>
       )}
     </Paper>

@@ -29,7 +29,7 @@ import type { ClientDocument } from '../types/clients';
 import type { OrderDetail, OrderSummary, Product } from '../types/orders';
 import type { TeamMember } from '../types/users';
 import { formatDate, formatMoney } from '../utils/format';
-import { OrderForm, type OrderFormValues } from './OrderForm';
+import { OrderDialog, type OrderFormValues } from './OrderDialog';
 import { StageChip } from './StageChip';
 
 interface ClientOrdersSectionProps {
@@ -50,7 +50,6 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
   const [employees, setEmployees] = useState<TeamMember[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<OrderDetail | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<OrderSummary | null>(null);
 
   function loadOrders() {
@@ -105,21 +104,15 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
     return res.data;
   }
 
+  // Errors propagate to the dialog, which shows them.
   async function handleSubmitOrder(values: OrderFormValues) {
-    setSubmitting(true);
-    try {
-      if (editingOrder) {
-        await apiClient.put(`/orders/${editingOrder.id}`, values);
-        setFormOpen(false);
-        loadOrders();
-      } else {
-        const res = await apiClient.post<{ id: string }>('/orders', { ...values, client: clientId });
-        navigate(`/orders/${res.data.id}`);
-      }
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
+    if (editingOrder) {
+      await apiClient.put(`/orders/${editingOrder.id}`, values);
+      setFormOpen(false);
+      loadOrders();
+    } else {
+      const res = await apiClient.post<{ id: string }>('/orders', { ...values, client: clientId });
+      navigate(`/orders/${res.data.id}`);
     }
   }
 
@@ -165,7 +158,7 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
                 <TableCell align="right">Кількість</TableCell>
                 <TableCell>Етап</TableCell>
                 <TableCell>Термін</TableCell>
-                <TableCell align="right">Ціна</TableCell>
+                <TableCell align="right">Сума без ПДВ</TableCell>
                 {canModify && <TableCell align="right">Дії</TableCell>}
               </TableRow>
             </TableHead>
@@ -183,7 +176,7 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
                     {order.isOverdue && <Chip size="small" color="error" label="Протерміновано" sx={{ ml: 1 }} />}
                   </TableCell>
                   <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                    {order.priceUah != null ? formatMoney(order.priceUah) : '—'}
+                    {order.total != null ? formatMoney(order.total) : '—'}
                   </TableCell>
                   {canModify && (
                     <TableCell align="right" sx={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
@@ -209,22 +202,19 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
         </TableContainer>
       )}
 
-      <Dialog open={formOpen} onClose={() => setFormOpen(false)} key={editingOrder?.id ?? 'new'}>
-        <DialogTitle>{editingOrder ? `Партія № ${editingOrder.number}` : 'Нова партія'}</DialogTitle>
-        <DialogContent>
-          <OrderForm
-            products={products}
-            documentPool={documentPool}
-            managers={managers}
-            employees={employees}
-            initialValue={editingOrder}
-            submitting={submitting}
-            onSubmit={handleSubmitOrder}
-            onCancel={() => setFormOpen(false)}
-            onUploadDocument={handleUploadDocument}
-          />
-        </DialogContent>
-      </Dialog>
+      {formOpen && (
+        <OrderDialog
+          key={editingOrder?.id ?? 'new'}
+          products={products}
+          documentPool={documentPool}
+          managers={managers}
+          employees={employees}
+          initialValue={editingOrder}
+          onSubmit={handleSubmitOrder}
+          onClose={() => setFormOpen(false)}
+          onUploadDocument={handleUploadDocument}
+        />
+      )}
 
       <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)}>
         <DialogTitle>Видалити партію № {deleteTarget?.number}?</DialogTitle>

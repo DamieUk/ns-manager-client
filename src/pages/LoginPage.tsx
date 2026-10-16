@@ -1,33 +1,45 @@
-import { Alert, Box, Button, CircularProgress, Link as MuiLink, Stack, TextField, Typography } from '@mui/material';
-import { useState, type FormEvent } from 'react';
+import { Alert, Button, CircularProgress, Link as MuiLink, Stack, TextField, Typography } from '@mui/material';
+import { useFormik } from 'formik';
+import { useState } from 'react';
 import { Link as RouterLink, Navigate } from 'react-router-dom';
 import { getErrorMessage } from '../api/errors';
 import { useAuth } from '../auth/useAuth';
 import AuthLayout from '../layouts/AuthLayout';
 import { roleHome } from '../routing/roleHome';
+import { fieldProps, REQUIRED } from '../utils/formik';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface LoginValues {
+  email: string;
+  password: string;
+}
 
 export function LoginPage() {
   const { user, login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const formik = useFormik<LoginValues>({
+    initialValues: { email: '', password: '' },
+    validate: (v) => {
+      const errors: Partial<Record<keyof LoginValues, string>> = {};
+      if (!v.email.trim()) errors.email = REQUIRED;
+      else if (!EMAIL_PATTERN.test(v.email.trim())) errors.email = 'Некоректний email';
+      if (!v.password) errors.password = REQUIRED;
+      return errors;
+    },
+    onSubmit: async (v) => {
+      setError(null);
+      try {
+        await login(v.email.trim(), v.password);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      }
+    },
+  });
 
   if (user) {
     return <Navigate to={roleHome(user.role)} replace />;
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
-      await login(email, password);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
   }
 
   return (
@@ -45,29 +57,13 @@ export function LoginPage() {
         </Alert>
       )}
 
-      <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={2}>
-          <TextField
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Пароль"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            fullWidth
-          />
-          <Button type="submit" variant="contained" fullWidth disabled={submitting}>
-            {submitting ? <CircularProgress size={22} color="inherit" /> : 'Увійти'}
-          </Button>
-        </Stack>
-      </Box>
+      <Stack component="form" noValidate spacing={2} onSubmit={formik.handleSubmit}>
+        <TextField label="Email" type="email" autoComplete="email" {...fieldProps(formik, 'email')} required fullWidth />
+        <TextField label="Пароль" type="password" autoComplete="current-password" {...fieldProps(formik, 'password')} required fullWidth />
+        <Button type="submit" variant="contained" fullWidth disabled={formik.isSubmitting}>
+          {formik.isSubmitting ? <CircularProgress size={22} color="inherit" /> : 'Увійти'}
+        </Button>
+      </Stack>
 
       <Typography variant="body2" sx={{ mt: 3, textAlign: 'center' }}>
         <MuiLink component={RouterLink} to="/forgot-password">

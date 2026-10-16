@@ -25,3 +25,11 @@ export function daysSince(value: string): string {
   const word = mod10 === 1 && mod100 !== 11 ? 'день' : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'дні' : 'днів';
   return `${days} ${word}`;
 }
+
+// Today (plus `days`) as an <input type="date"> value, in local time.
+export function dayInput(days = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString('sv-SE');
+}
+

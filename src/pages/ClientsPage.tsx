@@ -27,8 +27,7 @@ import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
-import { CreateClientForm, type CreateClientFormValues } from '../components/CreateClientForm';
-import { EditClientForm } from '../components/EditClientForm';
+import { CreateClientDialog, EditClientDialog, type CreateClientFormValues } from '../components/ClientDialogs';
 import { PaperChips } from '../components/PaperChips';
 import type { Client, ClientInput } from '../types/clients';
 import type { OrderSummary } from '../types/orders';
@@ -42,7 +41,6 @@ export function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [ordersByClient, setOrdersByClient] = useState<Record<string, OrdersState>>({});
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
@@ -67,39 +65,23 @@ export function ClientsPage() {
       .catch(() => setOrdersByClient((prev) => ({ ...prev, [clientId]: 'error' })));
   }
 
+  // Errors from these two propagate to their dialogs, which show them.
   async function handleCreate(values: CreateClientFormValues) {
-    setSubmitting(true);
-    setError(null);
-
     const { ndaFile, ...fields } = values;
     const formData = new FormData();
     for (const [key, value] of Object.entries(fields)) if (value.trim()) formData.append(key, value);
     if (ndaFile) formData.append('nda', ndaFile);
 
-    try {
-      const res = await apiClient.post<Client>('/clients', formData);
-      setDialogOpen(false);
-      navigate(`/clients/${res.data._id}`);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+    const res = await apiClient.post<Client>('/clients', formData);
+    setDialogOpen(false);
+    navigate(`/clients/${res.data._id}`);
   }
 
   async function handleEdit(values: ClientInput) {
     if (!editingClient) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      await apiClient.put(`/clients/${editingClient._id}`, values);
-      setEditingClient(null);
-      loadClients();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+    await apiClient.put(`/clients/${editingClient._id}`, values);
+    setEditingClient(null);
+    loadClients();
   }
 
   async function handleRestore(client: Client) {
@@ -241,26 +223,8 @@ export function ClientsPage() {
         })}
       </Stack>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>Новий клієнт</DialogTitle>
-        <DialogContent>
-          <CreateClientForm submitting={submitting} onSubmit={handleCreate} onCancel={() => setDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editingClient !== null} onClose={() => setEditingClient(null)}>
-        <DialogTitle>Редагувати клієнта</DialogTitle>
-        <DialogContent>
-          {editingClient && (
-            <EditClientForm
-              client={editingClient}
-              submitting={submitting}
-              onSubmit={handleEdit}
-              onCancel={() => setEditingClient(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {dialogOpen && <CreateClientDialog onSubmit={handleCreate} onClose={() => setDialogOpen(false)} />}
+      {editingClient && <EditClientDialog client={editingClient} onSubmit={handleEdit} onClose={() => setEditingClient(null)} />}
 
       <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)}>
         {deleteTarget?.status === 'deleted' ? (

@@ -27,7 +27,7 @@ import { getErrorMessage } from '../api/errors';
 import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
 import { SetPasswordDialog } from '../components/SetPasswordDialog';
-import { UserForm } from '../components/UserForm';
+import { UserDialog } from '../components/UserDialog';
 import { ROLE_OPTIONS, STATUS_OPTIONS } from '../constants/users';
 import type { UserInput, TeamMember } from '../types/users';
 
@@ -41,7 +41,6 @@ export function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<TeamMember | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TeamMember | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<TeamMember | null>(null);
 
@@ -66,22 +65,15 @@ export function UsersPage() {
     setFormOpen(true);
   }
 
+  // Errors propagate to the dialog, which shows them.
   async function handleSubmit(values: UserInput) {
-    setSubmitting(true);
-    setError(null);
-    try {
-      if (editingUser) {
-        await apiClient.put(`/users/${editingUser.id}`, values);
-      } else {
-        await apiClient.post('/users', values);
-      }
-      setFormOpen(false);
-      loadUsers();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
+    if (editingUser) {
+      await apiClient.put(`/users/${editingUser.id}`, values);
+    } else {
+      await apiClient.post('/users', values);
     }
+    setFormOpen(false);
+    loadUsers();
   }
 
   async function handleDelete() {
@@ -184,17 +176,9 @@ export function UsersPage() {
         </Table>
       </TableContainer>
 
-      <Dialog open={formOpen} onClose={() => setFormOpen(false)} key={editingUser?.id ?? 'new'}>
-        <DialogTitle>{editingUser ? 'Редагувати користувача' : 'Новий користувач'}</DialogTitle>
-        <DialogContent>
-          <UserForm
-            initialValue={editingUser}
-            submitting={submitting}
-            onSubmit={handleSubmit}
-            onCancel={() => setFormOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {formOpen && (
+        <UserDialog key={editingUser?.id ?? 'new'} initialValue={editingUser} onSubmit={handleSubmit} onClose={() => setFormOpen(false)} />
+      )}
 
       <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)}>
         {deleteTarget?.status === 'deleted' ? (
@@ -221,7 +205,7 @@ export function UsersPage() {
         </DialogActions>
       </Dialog>
 
-      <SetPasswordDialog user={passwordTarget} onClose={() => setPasswordTarget(null)} />
+      {passwordTarget && <SetPasswordDialog user={passwordTarget} onClose={() => setPasswordTarget(null)} />}
     </>
   );
 }

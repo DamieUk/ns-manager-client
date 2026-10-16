@@ -4,13 +4,16 @@ import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import { BoardPage } from './pages/BoardPage';
 import { ClientDetailPage } from './pages/ClientDetailPage';
 import { ClientsPage } from './pages/ClientsPage';
+import { CompanyPage } from './pages/CompanyPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { InvoicesPage } from './pages/InvoicesPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { OrderPage } from './pages/OrderPage';
 import { ProgressPage } from './pages/ProgressPage';
+import { PurchasesPage } from './pages/PurchasesPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { UsersPage } from './pages/UsersPage';
 import { ProtectedRoute } from './routing/ProtectedRoute';
@@ -31,6 +34,9 @@ function App() {
           <Route element={<ProtectedRoute allow={['executive']} />}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="board" element={<BoardPage />} />
+            <Route path="invoices" element={<InvoicesPage />} />
+            <Route path="purchases" element={<PurchasesPage />} />
+            <Route path="company" element={<CompanyPage />} />
           </Route>
 
           <Route path="orders/:orderId" element={<OrderPage />} />

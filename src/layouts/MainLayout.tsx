@@ -1,4 +1,7 @@
 import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
@@ -105,11 +108,20 @@ function MainLayout() {
               <NavItem to="/clients" icon={<PeopleAltOutlinedIcon fontSize="small" />}>
                 Клієнти
               </NavItem>
+              <NavItem to="/invoices" icon={<ReceiptLongOutlinedIcon fontSize="small" />}>
+                Рахунки
+              </NavItem>
+              <NavItem to="/purchases" icon={<LocalShippingOutlinedIcon fontSize="small" />}>
+                Закупівлі
+              </NavItem>
               {hasPermission(user, 'USERS', 'view') && (
                 <NavItem to="/users" icon={<GroupsOutlinedIcon fontSize="small" />}>
                   Користувачі
                 </NavItem>
               )}
+              <NavItem to="/company" icon={<BusinessOutlinedIcon fontSize="small" />}>
+                Компанія
+              </NavItem>
             </>
           )}
           {user.role === 'employee' && (

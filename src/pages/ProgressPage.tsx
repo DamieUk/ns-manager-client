@@ -4,7 +4,7 @@ import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import { ReportCard } from '../components/ReportCard';
 import { ReportDetailDialog } from '../components/ReportDetailDialog';
-import { ReportForm } from '../components/ReportForm';
+import { ReportDialog } from '../components/ReportDialog';
 import type { DailyProgress, DailyProgressInput } from '../types/dailyProgress';
 import type { OrderSummary } from '../types/orders';
 
@@ -34,7 +34,6 @@ export function ProgressPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DailyProgress | null>(null);
   const [detailEntry, setDetailEntry] = useState<DailyProgress | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DailyProgress | null>(null);
 
   function loadEntries() {
@@ -64,23 +63,16 @@ export function ProgressPage() {
     setFormOpen(true);
   }
 
+  // Errors propagate to the dialog, which shows them.
   async function handleSubmit(values: DailyProgressInput) {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const formData = buildFormData(values);
-      if (editingEntry) {
-        await apiClient.put(`/daily-progress/${editingEntry.id}`, formData);
-      } else {
-        await apiClient.post('/daily-progress', formData);
-      }
-      setFormOpen(false);
-      loadEntries();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
+    const formData = buildFormData(values);
+    if (editingEntry) {
+      await apiClient.put(`/daily-progress/${editingEntry.id}`, formData);
+    } else {
+      await apiClient.post('/daily-progress', formData);
     }
+    setFormOpen(false);
+    loadEntries();
   }
 
   async function handleDelete() {
@@ -139,18 +131,15 @@ export function ProgressPage() {
         </Box>
       )}
 
-      <Dialog open={formOpen} onClose={() => setFormOpen(false)} key={editingEntry?.id ?? 'new'}>
-        <DialogTitle>{editingEntry ? 'Редагувати звіт' : 'Створити звіт'}</DialogTitle>
-        <DialogContent>
-          <ReportForm
-            orders={orders}
-            initialValue={editingEntry}
-            submitting={submitting}
-            onSubmit={handleSubmit}
-            onCancel={() => setFormOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {formOpen && (
+        <ReportDialog
+          key={editingEntry?.id ?? 'new'}
+          orders={orders}
+          initialValue={editingEntry}
+          onSubmit={handleSubmit}
+          onClose={() => setFormOpen(false)}
+        />
+      )}
 
       <ReportDetailDialog
         entry={detailEntry}

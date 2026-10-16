@@ -2,29 +2,30 @@ import EditIcon from '@mui/icons-material/EditOutlined';
 import LockIcon from '@mui/icons-material/LockOutlined';
 import { Box, Chip, IconButton, Paper, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
-import type { OrderSummary } from '../types/orders';
+import type { OrderDetail } from '../types/orders';
 import { formatMoney } from '../utils/format';
+import { withVat } from '../utils/money';
 import { PriceDialog } from './PriceDialog';
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <Stack direction="row" sx={{ justifyContent: 'space-between', py: 0.75, borderTop: '1px solid', borderColor: 'divider' }}>
+    <Stack direction="row" sx={{ justifyContent: 'space-between', py: 0.75, borderTop: '1px solid', borderColor: 'divider', gap: 2 }}>
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: strong ? 800 : 600 }}>
+      <Typography variant="body2" sx={{ fontWeight: strong ? 800 : 600, textAlign: 'right' }}>
         {value}
       </Typography>
     </Stack>
   );
 }
 
-// The quote in the client's currency and the batch price in UAH that goes into the annex and
-// invoices. Locked from the invoicing stage on.
-export function BatchPriceCard({ order, canModify, onSaved }: { order: OrderSummary; canModify: boolean; onSaved: () => void }) {
+// The price per board (quote in the client's currency, agreed UAH price without VAT) and what the
+// batch comes to. Locked from the invoicing stage on.
+export function BatchPriceCard({ order, canModify, onSaved }: { order: OrderDetail; canModify: boolean; onSaved: () => void }) {
   const [editing, setEditing] = useState(false);
-  const hasQuote = order.quoteAmount != null && order.quoteCurrency;
-  const perBoard = order.priceUah != null && order.quantity > 0 ? order.priceUah / order.quantity : null;
+  const vatRate = order.payments?.vatRate ?? 0;
+  const hasQuote = order.unitQuote != null && order.quoteCurrency;
 
   return (
     <Paper sx={{ p: 2.5 }}>
@@ -40,31 +41,37 @@ export function BatchPriceCard({ order, canModify, onSaved }: { order: OrderSumm
         </Stack>
       </Stack>
 
-      {!hasQuote && order.priceUah == null ? (
+      {!hasQuote && order.unitPrice == null ? (
         <Box sx={{ py: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Прорахунку ще немає. Вкажіть суму за BOM у валюті клієнта.
+            Прорахунку ще немає. Вкажіть ціну за плату у валюті клієнта.
           </Typography>
         </Box>
       ) : (
         <>
-          <Row label="Прорахунок" value={hasQuote ? formatMoney(order.quoteAmount, order.quoteCurrency!) : '—'} />
+          <Row label="Прорахунок за плату" value={hasQuote ? formatMoney(order.unitQuote, order.quoteCurrency!) : '—'} />
           {order.quoteCurrency && order.quoteCurrency !== 'UAH' && (
             <Row label="Курс" value={order.exchangeRate != null ? `${order.exchangeRate} грн за 1 ${order.quoteCurrency}` : 'не зафіксовано'} />
           )}
-          <Row label="Ціна партії" value={formatMoney(order.priceUah)} strong />
-          {perBoard !== null && <Row label={`За плату (${order.quantity} шт.)`} value={formatMoney(perBoard)} />}
+          <Row label="Ціна за плату, без ПДВ" value={formatMoney(order.unitPrice)} />
+          {order.total != null && (
+            <>
+              <Row label={`Партія: ${order.quantity} шт., без ПДВ`} value={formatMoney(order.total)} strong />
+              {vatRate > 0 && <Row label={`З ПДВ ${vatRate}%`} value={formatMoney(withVat(order.total, vatRate))} />}
+            </>
+          )}
         </>
       )}
       {order.priceLocked && (
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-          Ціну змінюють, повернувши партію на етап «Погодження».
+          Ціну й кількість змінюють, повернувши партію на етап «Погодження».
         </Typography>
       )}
 
       {editing && (
         <PriceDialog
           order={order}
+          vatRate={vatRate}
           onClose={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);

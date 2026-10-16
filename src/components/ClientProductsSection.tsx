@@ -22,7 +22,7 @@ import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import type { Product } from '../types/orders';
 import { DocumentList } from './DocumentList';
-import { ProductForm, type ProductFormValues } from './ProductForm';
+import { ProductDialog, type ProductFormValues } from './ProductDialog';
 
 interface ClientProductsSectionProps {
   clientId: string;
@@ -34,7 +34,6 @@ export function ClientProductsSection({ clientId, canModify }: ClientProductsSec
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   function loadProducts() {
@@ -48,9 +47,8 @@ export function ClientProductsSection({ clientId, canModify }: ClientProductsSec
 
   useEffect(loadProducts, [clientId]);
 
+  // Errors propagate to the dialog, which shows them.
   async function handleCreate(values: ProductFormValues) {
-    setSubmitting(true);
-    setError(null);
 
     const formData = new FormData();
     formData.append('client', clientId);
@@ -61,15 +59,9 @@ export function ClientProductsSection({ clientId, canModify }: ClientProductsSec
     if (values.bomFile) formData.append('bomFile', values.bomFile);
     values.additionalFiles.forEach((file) => formData.append('additionalFiles', file));
 
-    try {
-      await apiClient.post('/products', formData);
-      setFormOpen(false);
-      loadProducts();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+    await apiClient.post('/products', formData);
+    setFormOpen(false);
+    loadProducts();
   }
 
   async function handleDelete() {
@@ -141,12 +133,7 @@ export function ClientProductsSection({ clientId, canModify }: ClientProductsSec
         </Accordion>
       ))}
 
-      <Dialog open={formOpen} onClose={() => setFormOpen(false)}>
-        <DialogTitle>Новий продукт</DialogTitle>
-        <DialogContent>
-          <ProductForm submitting={submitting} onSubmit={handleCreate} onCancel={() => setFormOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      {formOpen && <ProductDialog onSubmit={handleCreate} onClose={() => setFormOpen(false)} />}
 
       <Dialog open={deleteTargetId !== null} onClose={() => setDeleteTargetId(null)}>
         <DialogTitle>Видалити продукт?</DialogTitle>
