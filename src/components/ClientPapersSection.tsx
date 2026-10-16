@@ -38,7 +38,7 @@ export function ClientPapersSection({ clientId, contracts, canModify, onChanged 
 
   const orderLabel = (id?: string) => {
     const order = orders.find((o) => o.id === id);
-    return order ? `Партія: ${order.product.name} × ${order.quantity}` : null;
+    return order ? `Партія № ${order.number}: ${order.product.name} × ${order.quantity}` : null;
   };
 
   return (

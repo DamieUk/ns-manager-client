@@ -1,19 +1,61 @@
-import type { ClientDocument } from './clients';
+import type { ClientDocument, Contract } from './clients';
 
+export type OrderStage =
+  | 'quote'
+  | 'agreement'
+  | 'invoicing'
+  | 'procurement'
+  | 'prep'
+  | 'assembly'
+  | 'washing'
+  | 'qc'
+  | 'shipping'
+  | 'done'
+  | 'cancelled';
+
+export type Currency = 'USD' | 'EUR' | 'UAH';
+
+type Person = { id: string; name: string };
+
+// A batch (партія). Prices, the next stage and its blockers come only for owners.
 export interface OrderSummary {
   id: string;
+  number: string;
   client: { id: string; name: string };
   product: { id: string; name: string };
   quantity: number;
   description: string;
   status: string;
+  stage: OrderStage;
+  stageChangedAt: string;
   dueDate: string | null;
-  manager: { id: string; name: string } | null;
-  assignedEmployees: Array<{ id: string; name: string }>;
+  isOverdue: boolean;
+  manager: Person | null;
+  assignedEmployees: Person[];
+  createdAt: string;
+  quoteAmount?: number | null;
+  quoteCurrency?: Currency | null;
+  exchangeRate?: number | null;
+  priceUah?: number | null;
+  priceLocked?: boolean;
+  nextStage?: OrderStage | null;
+  blockers?: string[];
+}
+
+export interface StageEvent {
+  id: string;
+  fromStage: OrderStage | null;
+  toStage: OrderStage;
+  user: Person | null;
+  note: string | null;
+  createdAt: string;
 }
 
 export interface OrderDetail extends OrderSummary {
   documents: ClientDocument[];
+  progress: { completed: number; needsRework: number; partiallyAssembled: number; remaining: number };
+  history: StageEvent[];
+  annexes?: Contract[];
 }
 
 export type ProductType = 'PCB' | 'Component' | 'Other';
@@ -34,9 +76,15 @@ export interface OrderInput {
   product: string;
   quantity: number;
   description: string;
-  status?: string;
   dueDate?: string | null;
   manager?: string | null;
   assignedEmployees?: string[];
   documents?: string[];
+}
+
+export interface PriceInput {
+  quoteAmount: number | null;
+  quoteCurrency: Currency | null;
+  exchangeRate: number | null;
+  priceUah: number | null;
 }

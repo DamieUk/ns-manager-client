@@ -10,7 +10,10 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import type { DashboardResponse } from '../types/dashboard';
+import { formatDate } from '../utils/format';
+import { StageChip } from './StageChip';
 
 interface DashboardOrderRowProps {
   order: DashboardResponse['orders'][number];
@@ -31,10 +34,18 @@ export function DashboardOrderRow({ order, expanded, onToggle }: DashboardOrderR
             <ExpandMoreIcon />
           </IconButton>
         </TableCell>
+        <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+          <Link to={`/orders/${order.orderId}`} style={{ color: 'inherit' }}>
+            № {order.number}
+          </Link>
+        </TableCell>
         <TableCell>{order.client.name}</TableCell>
         <TableCell>{order.product.name}</TableCell>
         <TableCell>
-          {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '—'}
+          <StageChip stage={order.stage} />
+        </TableCell>
+        <TableCell>
+          {formatDate(order.dueDate)}
           {order.isOverdue && <Chip size="small" color="error" label="Протерміновано" sx={{ ml: 1 }} />}
         </TableCell>
         <TableCell align="right">{order.quantity}</TableCell>
@@ -44,7 +55,7 @@ export function DashboardOrderRow({ order, expanded, onToggle }: DashboardOrderR
         <TableCell align="right">{order.totals.partiallyAssembled}</TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={9} sx={{ py: 0, borderBottom: expanded ? undefined : 'none' }}>
+        <TableCell colSpan={11} sx={{ py: 0, borderBottom: expanded ? undefined : 'none' }}>
           <Collapse in={expanded} timeout="auto" unmountOnExit>
             {order.description && (
               <Typography variant="body2" sx={{ mt: 2 }}>

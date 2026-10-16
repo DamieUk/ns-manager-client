@@ -13,7 +13,10 @@ interface ContractDialogProps {
   // Edit this contract; otherwise create a new one of `defaultType`.
   contract: Contract | null;
   defaultType: ContractType;
-  orders: OrderSummary[];
+  orders: Array<Pick<OrderSummary, 'id' | 'number' | 'product' | 'quantity'>>;
+  // For a new annex opened from a batch page: that batch, and no other type to choose.
+  defaultOrder?: string;
+  lockType?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -26,11 +29,11 @@ const TITLE_HINT: Record<ContractType, string> = {
 
 // NDA, framework contract or an annex for one batch, with its number, signing date and the
 // signed scans. Saving with a signing date marks the contract as in force.
-export function ContractDialog({ clientId, contract, defaultType, orders, onClose, onSaved }: ContractDialogProps) {
+export function ContractDialog({ clientId, contract, defaultType, orders, defaultOrder, lockType, onClose, onSaved }: ContractDialogProps) {
   const [type, setType] = useState<ContractType>(contract?.type ?? defaultType);
   const [number, setNumber] = useState(contract?.number ?? '');
   const [signedAt, setSignedAt] = useState(toDateInput(contract?.signedAt));
-  const [order, setOrder] = useState(contract?.order ?? '');
+  const [order, setOrder] = useState(contract?.order ?? defaultOrder ?? '');
   const [title, setTitle] = useState(contract?.title ?? '');
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -65,7 +68,7 @@ export function ContractDialog({ clientId, contract, defaultType, orders, onClos
       <DialogContent>
         <Stack component="form" spacing={2} onSubmit={handleSubmit} sx={{ mt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
-          <TextField select label="Тип" value={type} onChange={(e) => setType(e.target.value as ContractType)}>
+          <TextField select label="Тип" value={type} onChange={(e) => setType(e.target.value as ContractType)} disabled={lockType}>
             {CONTRACT_TYPE_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>
                 {o.label}
@@ -73,11 +76,11 @@ export function ContractDialog({ clientId, contract, defaultType, orders, onClos
             ))}
           </TextField>
           {type === 'annex' && (
-            <TextField select label="Партія (замовлення)" value={order} onChange={(e) => setOrder(e.target.value)}>
+            <TextField select label="Партія" value={order} onChange={(e) => setOrder(e.target.value)} disabled={lockType}>
               <MenuItem value="">Не прив'язано</MenuItem>
               {orders.map((o) => (
                 <MenuItem key={o.id} value={o.id}>
-                  {o.product.name} × {o.quantity}
+                  № {o.number} · {o.product.name} × {o.quantity}
                 </MenuItem>
               ))}
             </TextField>

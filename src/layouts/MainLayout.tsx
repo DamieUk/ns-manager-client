@@ -4,6 +4,7 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
+import ViewKanbanOutlinedIcon from '@mui/icons-material/ViewKanbanOutlined';
 import { Avatar, Box, Container, IconButton, Stack, Typography } from '@mui/material';
 import { Logo } from '../components/Logo';
 import type { ReactNode } from 'react';
@@ -14,9 +15,10 @@ import { FOREST, MINT_TINT } from '../theme';
 
 const SIDEBAR_WIDTH = 260;
 
-function NavItem({ to, icon, children }: { to: string; icon: ReactNode; children: ReactNode }) {
+// `match` lists further path prefixes the item stays highlighted on.
+function NavItem({ to, icon, match = [], children }: { to: string; icon: ReactNode; match?: string[]; children: ReactNode }) {
   const { pathname } = useLocation();
-  const isActive = pathname.startsWith(to);
+  const isActive = [to, ...match].some((prefix) => pathname.startsWith(prefix));
 
   return (
     <Box
@@ -46,6 +48,7 @@ function NavItem({ to, icon, children }: { to: string; icon: ReactNode; children
 
 function MainLayout() {
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
 
   if (!user) return null;
 
@@ -96,6 +99,9 @@ function MainLayout() {
               <NavItem to="/dashboard" icon={<SpaceDashboardOutlinedIcon fontSize="small" />}>
                 Дашборд
               </NavItem>
+              <NavItem to="/board" match={['/orders/']} icon={<ViewKanbanOutlinedIcon fontSize="small" />}>
+                Партії
+              </NavItem>
               <NavItem to="/clients" icon={<PeopleAltOutlinedIcon fontSize="small" />}>
                 Клієнти
               </NavItem>
@@ -111,7 +117,7 @@ function MainLayout() {
               <NavItem to="/progress" icon={<AssignmentTurnedInOutlinedIcon fontSize="small" />}>
                 Мій прогрес
               </NavItem>
-              <NavItem to="/my-orders" icon={<Inventory2OutlinedIcon fontSize="small" />}>
+              <NavItem to="/my-orders" match={['/orders/']} icon={<Inventory2OutlinedIcon fontSize="small" />}>
                 Мої замовлення
               </NavItem>
             </>
@@ -143,7 +149,7 @@ function MainLayout() {
       </Box>
 
       <Box component="main" sx={{ flexGrow: 1, overflow: 'auto' }}>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Container maxWidth={pathname.startsWith('/board') ? false : 'lg'} sx={{ py: 4 }}>
           <Outlet />
         </Container>
       </Box>

@@ -69,7 +69,7 @@ export function ClientDetailPage() {
       </Stack>
 
       <Tabs value={tab} onChange={(_, value) => setTab(value)} sx={{ mb: 2 }}>
-        <Tab value="orders" label="Замовлення" />
+        <Tab value="orders" label="Партії" />
         <Tab value="products" label="Продукти" />
         <Tab value="documents" label="Документи" />
       </Tabs>

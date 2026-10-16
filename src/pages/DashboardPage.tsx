@@ -96,7 +96,7 @@ export function DashboardPage() {
       {!loading && data && (
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <StatCard
-            label="Активні замовлення"
+            label="Партії в роботі"
             value={data.orders.length}
             icon={<Inventory2OutlinedIcon fontSize="small" sx={{ color: '#fff' }} />}
             highlight
@@ -125,8 +125,10 @@ export function DashboardPage() {
             <TableHead>
               <TableRow>
                 <TableCell />
+                <TableCell>Партія</TableCell>
                 <TableCell>Клієнт</TableCell>
                 <TableCell>Продукт</TableCell>
+                <TableCell>Етап</TableCell>
                 <TableCell>Термін виконання</TableCell>
                 <TableCell align="right">К-сть</TableCell>
                 <TableCell align="right">Залишилось</TableCell>

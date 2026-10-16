@@ -12,14 +12,18 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
+import { StageChip } from '../components/StageChip';
 import type { MyOrder } from '../types/myOrders';
+import { formatDate } from '../utils/format';
 
 export function MyOrdersPage() {
   const [orders, setOrders] = useState<MyOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     apiClient
@@ -47,9 +51,10 @@ export function MyOrdersPage() {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Партія</TableCell>
               <TableCell>Клієнт</TableCell>
               <TableCell>Продукт</TableCell>
-              <TableCell>Статус</TableCell>
+              <TableCell>Етап</TableCell>
               <TableCell>Термін виконання</TableCell>
               <TableCell align="right">Зроблено</TableCell>
               <TableCell align="right">Залишилось</TableCell>
@@ -57,14 +62,15 @@ export function MyOrdersPage() {
           </TableHead>
           <TableBody>
             {orders.map((order) => (
-              <TableRow key={order.id} sx={order.isOverdue ? { bgcolor: 'error.light' } : undefined}>
+              <TableRow key={order.id} hover onClick={() => navigate(`/orders/${order.id}`)} sx={{ cursor: 'pointer' }}>
+                <TableCell sx={{ fontWeight: 700 }}>№ {order.number}</TableCell>
                 <TableCell>{order.client.name}</TableCell>
                 <TableCell>{order.product.name}</TableCell>
                 <TableCell>
-                  <Chip size="small" label={order.status} />
+                  <StageChip stage={order.stage} />
                 </TableCell>
                 <TableCell>
-                  {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '—'}
+                  {formatDate(order.dueDate)}
                   {order.isOverdue && <Chip size="small" color="error" label="Протерміновано" sx={{ ml: 1 }} />}
                 </TableCell>
                 <TableCell align="right">{order.completed}</TableCell>
@@ -73,8 +79,8 @@ export function MyOrdersPage() {
             ))}
             {orders.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6}>
-                  <Typography color="text.secondary">Немає заасайнених замовлень</Typography>
+                <TableCell colSpan={7}>
+                  <Typography color="text.secondary">Вас ще не призначено на жодну партію</Typography>
                 </TableCell>
               </TableRow>
             )}

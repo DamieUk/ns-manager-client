@@ -1,7 +1,11 @@
+import type { OrderStage } from './orders';
+
 export interface DashboardResponse {
   generatedAt: string;
   orders: Array<{
     orderId: string;
+    number: string;
+    stage: OrderStage;
     product: { id: string; name: string };
     client: { id: string; name: string };
     quantity: number;

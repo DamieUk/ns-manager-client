@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
+import { BoardPage } from './pages/BoardPage';
 import { ClientDetailPage } from './pages/ClientDetailPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -8,6 +9,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import NotFoundPage from './pages/NotFoundPage';
+import { OrderPage } from './pages/OrderPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { UsersPage } from './pages/UsersPage';
@@ -28,7 +30,10 @@ function App() {
 
           <Route element={<ProtectedRoute allow={['executive']} />}>
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="board" element={<BoardPage />} />
           </Route>
+
+          <Route path="orders/:orderId" element={<OrderPage />} />
 
           <Route element={<ProtectedRoute allow={['executive']} permission={{ key: 'ORDERS', minAction: 'view' }} />}>
             <Route path="clients" element={<ClientsPage />} />

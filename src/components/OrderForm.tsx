@@ -6,13 +6,10 @@ import type { OrderDetail, Product } from '../types/orders';
 import type { TeamMember } from '../types/users';
 import { FileDropzone } from './FileDropzone';
 
-const ORDER_STATUSES = ['active', 'completed', 'cancelled'] as const;
-
 export interface OrderFormValues {
   product: string;
   quantity: number;
   description: string;
-  status: string;
   dueDate: string;
   manager: string;
   assignedEmployees: string[];
@@ -58,7 +55,6 @@ export function OrderForm({
       product: initialValue?.product.id ?? '',
       quantity: initialValue?.quantity ?? 1,
       description: initialValue?.description ?? '',
-      status: initialValue?.status ?? 'active',
       dueDate: initialValue?.dueDate?.slice(0, 10) ?? '',
       manager: initialValue?.manager?.id ?? '',
       assignedEmployees: initialValue?.assignedEmployees.map((e) => e.id) ?? [],
@@ -131,16 +127,6 @@ export function OrderForm({
         minRows={2}
         required
       />
-
-      {initialValue && (
-        <TextField select name="status" label="Статус" value={formik.values.status} onChange={formik.handleChange}>
-          {ORDER_STATUSES.map((status) => (
-            <MenuItem key={status} value={status}>
-              {status}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
 
       <TextField
         type="date"
