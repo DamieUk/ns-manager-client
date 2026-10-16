@@ -1,22 +1,13 @@
-import GoogleIcon from '@mui/icons-material/AccountCircle';
-import { Alert, Box, Button, CircularProgress, Divider, Link as MuiLink, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Link as MuiLink, Stack, TextField, Typography } from '@mui/material';
 import { useState, type FormEvent } from 'react';
-import { Link as RouterLink, Navigate, useLocation } from 'react-router-dom';
-import apiClient from '../api/client';
+import { Link as RouterLink, Navigate } from 'react-router-dom';
 import { getErrorMessage } from '../api/errors';
-import { getGoogleSignInUrl, getLoginErrorMessage } from '../auth/googleAuth';
 import { useAuth } from '../auth/useAuth';
 import AuthLayout from '../layouts/AuthLayout';
 import { roleHome } from '../routing/roleHome';
-import type { LoginResponse } from '../types/auth';
-
-interface LoginLocationState {
-  error?: string;
-}
 
 export function LoginPage() {
   const { user, login } = useAuth();
-  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -26,15 +17,12 @@ export function LoginPage() {
     return <Navigate to={roleHome(user.role)} replace />;
   }
 
-  const oauthErrorMessage = getLoginErrorMessage((location.state as LoginLocationState | null)?.error ?? null);
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const res = await apiClient.post<LoginResponse>('/auth/login', { email, password });
-      await login(res.data.token);
+      await login(email, password);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -51,24 +39,11 @@ export function LoginPage() {
         Увійдіть, щоб продовжити
       </Typography>
 
-      {(oauthErrorMessage || error) && (
+      {error && (
         <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-          {error ?? oauthErrorMessage}
+          {error}
         </Alert>
       )}
-
-      <Button
-        variant="outlined"
-        fullWidth
-        startIcon={<GoogleIcon />}
-        onClick={() => {
-          window.location.href = getGoogleSignInUrl();
-        }}
-      >
-        Увійти через Google
-      </Button>
-
-      <Divider sx={{ my: 3 }}>або</Divider>
 
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={2}>

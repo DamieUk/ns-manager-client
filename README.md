@@ -5,10 +5,13 @@ React + Vite + Material UI (MUI) + React Router, TypeScript.
 ## Розробка
 
 ```bash
-cp .env.example .env.local   # налаштувати VITE_API_URL (адреса бекенду)
 npm install
 npm run dev                  # http://localhost:5173
 ```
+
+Бекенд має працювати на `http://localhost:5001` — Vite проксіює на нього `/api`, тож клієнт і
+API в розробці на одному origin, як і в продакшені. Авторизація — httpOnly cookie сесії, яку
+ставить бекенд; токенів у `localStorage` немає.
 
 ## Структура
 
@@ -23,7 +26,7 @@ src/
   components/          # перевикористовувані компоненти
   routing/             # ProtectedRoute, роль-based редіректи
   types/               # TS-типи відповідей API
-  api/client.ts        # axios-інстанс, base URL з VITE_API_URL
+  api/client.ts        # axios-інстанс (base URL /api, cookie-сесія)
 ```
 
 ## Деплой

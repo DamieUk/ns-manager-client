@@ -8,7 +8,6 @@ export interface TeamMember {
   lastName: string;
   jobTitle: string;
   email: string;
-  googleEmail: string;
   phone: string;
   address: string;
   status: UserStatus;
