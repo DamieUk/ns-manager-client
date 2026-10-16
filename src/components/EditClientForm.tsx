@@ -1,6 +1,8 @@
 import { Button, CircularProgress, Stack, TextField } from '@mui/material';
 import { useFormik } from 'formik';
 import type { Client, ClientInput } from '../types/clients';
+import { requisitesOf } from '../utils/requisites';
+import { RequisitesFields } from './RequisitesFields';
 
 function validate(values: ClientInput): Partial<Record<keyof ClientInput, string>> {
   const errors: Partial<Record<keyof ClientInput, string>> = {};
@@ -13,9 +15,10 @@ interface EditClientFormProps {
   submitting: boolean;
   onSubmit: (values: ClientInput) => void;
   onCancel: () => void;
+  requisitesExpanded?: boolean;
 }
 
-export function EditClientForm({ client, submitting, onSubmit, onCancel }: EditClientFormProps) {
+export function EditClientForm({ client, submitting, onSubmit, onCancel, requisitesExpanded }: EditClientFormProps) {
   const formik = useFormik<ClientInput>({
     initialValues: {
       name: client.name,
@@ -24,6 +27,7 @@ export function EditClientForm({ client, submitting, onSubmit, onCancel }: EditC
       phone: client.phone ?? '',
       address: client.address ?? '',
       notes: client.notes ?? '',
+      ...requisitesOf(client),
     },
     validate,
     onSubmit,
@@ -68,6 +72,8 @@ export function EditClientForm({ client, submitting, onSubmit, onCancel }: EditC
         minRows={2}
         fullWidth
       />
+
+      <RequisitesFields values={formik.values} onChange={formik.handleChange} defaultExpanded={requisitesExpanded} />
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end', pt: 1 }}>
         <Button onClick={onCancel} disabled={submitting}>

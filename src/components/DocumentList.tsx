@@ -2,11 +2,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { IconButton, List, ListItem, ListItemText, Typography } from '@mui/material';
+import { IconButton, List, ListItem, ListItemText, MenuItem, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
-import type { ClientDocument } from '../types/clients';
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_OPTIONS } from '../constants/documents';
+import type { ClientDocument, DocumentType } from '../types/clients';
 import { PdfViewerDialog } from './PdfViewerDialog';
 
 interface DocumentListProps {
@@ -16,9 +17,21 @@ interface DocumentListProps {
   emptyText?: string;
   dense?: boolean;
   onError?: (message: string) => void;
+  // Show each file's type; with onChangeType it becomes editable.
+  showType?: boolean;
+  onChangeType?: (docId: string, type: DocumentType) => void;
 }
 
-export function DocumentList({ documents, onDelete, onDetach, emptyText = 'Немає документів', dense, onError }: DocumentListProps) {
+export function DocumentList({
+  documents,
+  onDelete,
+  onDetach,
+  emptyText = 'Немає документів',
+  dense,
+  onError,
+  showType,
+  onChangeType,
+}: DocumentListProps) {
   const [previewDoc, setPreviewDoc] = useState<ClientDocument | null>(null);
 
   async function handleDownload(doc: ClientDocument) {
@@ -73,7 +86,32 @@ export function DocumentList({ documents, onDelete, onDetach, emptyText = 'Не�
               </>
             }
           >
-            <ListItemText primary={doc.originalName} />
+            <ListItemText
+              primary={doc.originalName}
+              secondary={
+                showType && onChangeType ? (
+                  <TextField
+                    select
+                    variant="standard"
+                    size="small"
+                    value={doc.type ?? 'other'}
+                    onChange={(e) => onChangeType(doc._id, e.target.value as DocumentType)}
+                    slotProps={{ htmlInput: { 'aria-label': 'Тип документа' } }}
+                    sx={{ minWidth: 180, '& .MuiInputBase-input': { fontSize: 13 } }}
+                  >
+                    {DOCUMENT_TYPE_OPTIONS.map((o) => (
+                      <MenuItem key={o.value} value={o.value}>
+                        {o.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                ) : showType ? (
+                  DOCUMENT_TYPE_LABELS[doc.type ?? 'other']
+                ) : undefined
+              }
+              slotProps={{ secondary: { component: 'div' } }}
+              sx={{ pr: 14 }}
+            />
           </ListItem>
         ))}
       </List>

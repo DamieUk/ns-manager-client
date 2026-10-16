@@ -29,6 +29,7 @@ import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
 import { CreateClientForm, type CreateClientFormValues } from '../components/CreateClientForm';
 import { EditClientForm } from '../components/EditClientForm';
+import { PaperChips } from '../components/PaperChips';
 import type { Client, ClientInput } from '../types/clients';
 import type { OrderSummary } from '../types/orders';
 
@@ -70,16 +71,10 @@ export function ClientsPage() {
     setSubmitting(true);
     setError(null);
 
+    const { ndaFile, ...fields } = values;
     const formData = new FormData();
-    formData.append('name', values.name);
-    formData.append('code', values.code);
-    if (values.contactName) formData.append('contactName', values.contactName);
-    if (values.email) formData.append('email', values.email);
-    if (values.phone) formData.append('phone', values.phone);
-    if (values.address) formData.append('address', values.address);
-    if (values.notes) formData.append('notes', values.notes);
-    if (values.contractFile) formData.append('contract', values.contractFile);
-    values.supportingFiles.forEach((file) => formData.append('documents', file));
+    for (const [key, value] of Object.entries(fields)) if (value.trim()) formData.append(key, value);
+    if (ndaFile) formData.append('nda', ndaFile);
 
     try {
       const res = await apiClient.post<Client>('/clients', formData);
@@ -169,6 +164,7 @@ export function ClientsPage() {
                     <Typography sx={{ fontWeight: 700 }}>{client.name}</Typography>
                     {client.code && <Chip size="small" label={client.code} />}
                     {client.status === 'deleted' && <Chip size="small" color="error" label="Видалено" />}
+                    <PaperChips papers={client.papers} size="small" />
                   </Stack>
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <Button

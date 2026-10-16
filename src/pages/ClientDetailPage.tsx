@@ -1,4 +1,4 @@
-import { Alert, Box, Chip, CircularProgress, List, ListItem, ListItemText, Paper, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Alert, Box, Chip, CircularProgress, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import apiClient from '../api/client';
@@ -7,8 +7,10 @@ import { hasPermission } from '../auth/permissions';
 import { useAuth } from '../auth/useAuth';
 import { ClientDocumentsSection } from '../components/ClientDocumentsSection';
 import { ClientOrdersSection } from '../components/ClientOrdersSection';
+import { ClientPapersSection } from '../components/ClientPapersSection';
 import { ClientProductsSection } from '../components/ClientProductsSection';
-import { DocumentList } from '../components/DocumentList';
+import { PaperChips } from '../components/PaperChips';
+import { RequisitesCard } from '../components/RequisitesCard';
 import type { ClientDetail } from '../types/clients';
 
 type TabKey = 'orders' | 'products' | 'documents';
@@ -32,40 +34,39 @@ export function ClientDetailPage() {
   useEffect(loadClient, [clientId]);
 
   if (loading) return <CircularProgress />;
-  if (error) return <Alert severity="error">{error}</Alert>;
-  if (!client) return null;
+  if (!client) return error ? <Alert severity="error">{error}</Alert> : null;
 
   const canModifyOrders = hasPermission(user, 'ORDERS', 'modify');
   const canModifyProducts = hasPermission(user, 'PRODUCTS', 'modify');
 
   return (
     <>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
-          {client.name}
-        </Typography>
-        {client.code && <Chip label={client.code} />}
-      </Stack>
-      {client.contactName && <Typography color="text.secondary">{client.contactName}</Typography>}
-
-      <Typography variant="h6" sx={{ mt: 3 }}>
-        Контракти
-      </Typography>
-      <List component={Paper} sx={{ mb: 3 }}>
-        {client.contracts.map((contract) => (
-          <ListItem key={contract._id} sx={{ display: 'block' }}>
-            <ListItemText primary={contract.title} secondary={contract.status} />
-            <Box sx={{ pl: 2 }}>
-              <DocumentList documents={contract.documents} dense onError={setError} />
-            </Box>
-          </ListItem>
-        ))}
-        {client.contracts.length === 0 && (
-          <ListItem>
-            <ListItemText primary="Немає контрактів" />
-          </ListItem>
+      <Stack spacing={1} sx={{ mb: 3 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}>
+          <Typography variant="h4" sx={{ mb: 0 }}>
+            {client.name}
+          </Typography>
+          {client.code && <Chip label={client.code} />}
+          {client.status === 'deleted' && <Chip color="error" label="Видалено" />}
+        </Stack>
+        {(client.legalName || client.contactName) && (
+          <Typography color="text.secondary">{[client.legalName, client.contactName].filter(Boolean).join(' · ')}</Typography>
         )}
-      </List>
+        <PaperChips papers={client.papers} />
+      </Stack>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <Stack spacing={3} sx={{ mb: 4 }}>
+        <ClientPapersSection clientId={client._id} contracts={client.contracts} canModify={canModifyOrders} onChanged={loadClient} />
+        <Box sx={{ maxWidth: 760 }}>
+          <RequisitesCard client={client} canModify={canModifyOrders} onSaved={loadClient} />
+        </Box>
+      </Stack>
 
       <Tabs value={tab} onChange={(_, value) => setTab(value)} sx={{ mb: 2 }}>
         <Tab value="orders" label="Замовлення" />

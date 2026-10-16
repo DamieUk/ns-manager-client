@@ -1,5 +1,6 @@
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
+import { Logo } from '../components/Logo';
 import { FOREST } from '../theme';
 
 interface AuthLayoutProps {
@@ -18,7 +19,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
           bgcolor: FOREST,
         }}
       >
-        <Stack spacing={1.5} sx={{ textAlign: 'center', px: 6 }}>
+        <Stack spacing={1.5} sx={{ textAlign: 'center', alignItems: 'center', px: 6 }}>
+          <Box sx={{ color: '#FFFFFF', mb: 1 }}>
+            <Logo size={88} />
+          </Box>
           <Typography variant="h3" sx={{ fontWeight: 700, color: '#FFFFFF' }}>
             Numenor
           </Typography>

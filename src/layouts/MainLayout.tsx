@@ -5,6 +5,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
 import { Avatar, Box, Container, IconButton, Stack, Typography } from '@mui/material';
+import { Logo } from '../components/Logo';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { hasPermission } from '../auth/permissions';
@@ -76,10 +77,9 @@ function MainLayout() {
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
-              fontWeight: 700,
             }}
           >
-            N
+            <Logo size={22} />
           </Box>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
             Numenor
