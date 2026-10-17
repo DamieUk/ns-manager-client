@@ -29,7 +29,7 @@ export function BatchPriceCard({ order, canModify, onSaved }: { order: OrderDeta
 
   return (
     <Paper sx={{ p: 2.5 }}>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="h6">Ціна</Typography>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           {order.priceLocked && <Chip size="small" icon={<LockIcon />} label="Зафіксовано" variant="outlined" />}

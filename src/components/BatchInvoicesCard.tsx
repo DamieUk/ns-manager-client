@@ -55,7 +55,7 @@ export function BatchInvoicesCard({ order, onChanged, onError }: BatchInvoicesCa
 
   return (
     <Paper sx={{ p: 2.5 }}>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="h6">Рахунки</Typography>
         <Button
           size="small"
@@ -102,10 +102,9 @@ export function BatchInvoicesCard({ order, onChanged, onError }: BatchInvoicesCa
             <Stack
               key={inv.id}
               direction="row"
-              spacing={1.5}
-              sx={{ alignItems: 'center', py: 1, borderTop: '1px solid', borderColor: 'divider', opacity: inv.status === 'cancelled' ? 0.55 : 1 }}
+              sx={{ alignItems: 'center', flexWrap: 'wrap', columnGap: 1.5, rowGap: 0.75, py: 1, borderTop: '1px solid', borderColor: 'divider', opacity: inv.status === 'cancelled' ? 0.55 : 1 }}
             >
-              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Box sx={{ flex: '1 1 240px', minWidth: 0 }}>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
                   № {inv.number} · {INVOICE_KIND_LABELS[inv.kind]} · {formatMoney(inv.total)}
                 </Typography>

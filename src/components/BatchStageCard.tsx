@@ -30,7 +30,24 @@ export function BatchStageCard({ order, canChange, onChanged }: BatchStageCardPr
         </Typography>
       </Stack>
 
-      <Box sx={{ overflowX: 'auto', pb: 1 }}>
+      {/* Phones: the pipeline as a segmented bar with the step count; wider screens: the stepper. */}
+      <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+        <Stack direction="row" spacing={0.5}>
+          {PIPELINE.map((s, i) => (
+            <Box
+              key={s.value}
+              title={s.label}
+              sx={{ flex: 1, height: 8, borderRadius: 4, bgcolor: !cancelled && i <= current ? s.color : 'divider', opacity: i === current ? 1 : 0.75 }}
+            />
+          ))}
+        </Stack>
+        {!cancelled && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Етап {current + 1} з {PIPELINE.length}: {stageInfo(order.stage).hint}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={{ overflowX: 'auto', pb: 1, display: { xs: 'none', md: 'block' } }}>
         <Stepper activeStep={cancelled ? -1 : current} alternativeLabel sx={{ minWidth: 820 }}>
           {PIPELINE.map((s, i) => (
             <Step key={s.value} completed={!cancelled && (i < current || order.stage === 'done')}>
@@ -70,6 +87,7 @@ export function BatchStageCard({ order, canChange, onChanged }: BatchStageCardPr
           {order.nextStage && (
             <Button
               variant="contained"
+              sx={{ flexGrow: { xs: 1, sm: 0 } }}
               endIcon={<ArrowForwardIcon />}
               disabled={blockers.length > 0}
               onClick={() => setDialog({ target: order.nextStage! })}

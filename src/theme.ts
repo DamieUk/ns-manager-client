@@ -29,8 +29,9 @@ const theme = createTheme({
   typography: {
     fontFamily: '"Plus Jakarta Sans", "Inter", "Helvetica", "Arial", sans-serif',
     h3: { fontWeight: 700, letterSpacing: '-0.02em' },
-    h4: { fontWeight: 700, letterSpacing: '-0.02em' },
-    h5: { fontWeight: 700 },
+    // Page titles shrink on phones so a title and its buttons fit one screen width.
+    h4: { fontWeight: 700, letterSpacing: '-0.02em', fontSize: '1.6rem', '@media (min-width:600px)': { fontSize: '2.125rem' } },
+    h5: { fontWeight: 700, fontSize: '1.3rem', '@media (min-width:600px)': { fontSize: '1.5rem' } },
     h6: { fontWeight: 700 },
     button: { fontWeight: 600, textTransform: 'none' },
   },
@@ -79,6 +80,10 @@ const theme = createTheme({
           backgroundColor: SURFACE,
         },
       },
+    },
+    // Rows of tabs scroll sideways on narrow screens instead of squeezing.
+    MuiTabs: {
+      defaultProps: { variant: 'scrollable', scrollButtons: 'auto', allowScrollButtonsMobile: true },
     },
     MuiChip: {
       styleOverrides: {

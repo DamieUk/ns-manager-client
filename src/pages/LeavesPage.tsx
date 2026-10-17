@@ -30,6 +30,8 @@ import { StatCard } from '../components/StatCard';
 import { LEAVE_KIND_LABELS, LEAVE_STATUS } from '../constants/leaves';
 import type { LeaveRequest } from '../types/leaves';
 import { dayInput, formatDate } from '../utils/format';
+import { MobileCard, MobileCardList } from '../components/MobileCard';
+import { useIsPhone } from '../utils/useIsPhone';
 
 type Tab = 'pending' | 'away' | 'mine' | 'all';
 
@@ -45,6 +47,7 @@ export function LeavesPage() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>(isOwner ? 'pending' : 'mine');
   const [creating, setCreating] = useState(false);
+  const isPhone = useIsPhone();
   const [deciding, setDeciding] = useState<{ leave: LeaveRequest; decision: 'approved' | 'rejected' } | null>(null);
 
   function load() {
@@ -80,6 +83,38 @@ export function LeavesPage() {
     if (tab === 'mine') return mine;
     return leaves;
   }, [tab, leaves, pending, away, mine]);
+
+  const isNow = (l: LeaveRequest) => l.status === 'approved' && isoDay(l.startDate) <= today && isoDay(l.endDate) >= today;
+
+  // Approve / reject for owners, withdraw for one's own request that hasn't started.
+  function actionsFor(l: LeaveRequest) {
+    const own = l.user.id === user?.id;
+    const canCancel = own && (l.status === 'pending' || (l.status === 'approved' && isoDay(l.startDate) > today));
+    return (
+      <>
+        {isOwner && l.status === 'pending' && (
+          <>
+            <Button size="small" variant="contained" onClick={() => setDeciding({ leave: l, decision: 'approved' })}>
+              Погодити
+            </Button>
+            <Button size="small" color="error" onClick={() => setDeciding({ leave: l, decision: 'rejected' })} sx={{ ml: 1 }}>
+              Відхилити
+            </Button>
+          </>
+        )}
+        {isOwner && l.status === 'approved' && !own && (
+          <Button size="small" color="error" onClick={() => setDeciding({ leave: l, decision: 'rejected' })}>
+            Скасувати
+          </Button>
+        )}
+        {canCancel && (
+          <Button size="small" onClick={() => cancel(l)}>
+            Відкликати
+          </Button>
+        )}
+      </>
+    );
+  }
 
   if (loading) return <CircularProgress />;
 
@@ -125,94 +160,97 @@ export function LeavesPage() {
         </Tabs>
       )}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              {isOwner && <TableCell>Хто</TableCell>}
-              <TableCell>Тип</TableCell>
-              <TableCell>Дати</TableCell>
-              <TableCell align="right">Днів</TableCell>
-              <TableCell>Коментар</TableCell>
-              <TableCell>Стан</TableCell>
-              <TableCell align="right" />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {shown.map((l) => {
-              const state = LEAVE_STATUS[l.status];
-              const own = l.user.id === user?.id;
-              const now = l.status === 'approved' && isoDay(l.startDate) <= today && isoDay(l.endDate) >= today;
-              const canCancel = own && (l.status === 'pending' || (l.status === 'approved' && isoDay(l.startDate) > today));
-              return (
-                <TableRow key={l.id}>
-                  {isOwner && (
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                        {l.user.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {l.user.jobTitle}
-                      </Typography>
+      {isPhone ? (
+        <MobileCardList empty={tab === 'pending' ? 'Нових заявок немає' : 'Заявок немає'}>
+          {shown.map((l) => (
+            <MobileCard
+              key={l.id}
+              title={isOwner ? l.user.name : LEAVE_KIND_LABELS[l.kind]}
+              aside={
+                <Chip size="small" color={LEAVE_STATUS[l.status].color} variant={l.status === 'approved' ? 'filled' : 'outlined'} label={LEAVE_STATUS[l.status].label} />
+              }
+              lines={[
+                <>
+                  {isOwner ? `${LEAVE_KIND_LABELS[l.kind]} · ` : ''}
+                  {formatDate(l.startDate)} – {formatDate(l.endDate)} · {l.days} дн.
+                  {isNow(l) && <Chip size="small" color="info" label="зараз" sx={{ ml: 1 }} />}
+                </>,
+                l.reason,
+                l.decisionNote && `${l.decidedBy?.name}: ${l.decisionNote}`,
+              ]}
+              actions={actionsFor(l)}
+            />
+          ))}
+        </MobileCardList>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {isOwner && <TableCell>Хто</TableCell>}
+                <TableCell>Тип</TableCell>
+                <TableCell>Дати</TableCell>
+                <TableCell align="right">Днів</TableCell>
+                <TableCell>Коментар</TableCell>
+                <TableCell>Стан</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {shown.map((l) => {
+                const state = LEAVE_STATUS[l.status];
+                const now = isNow(l);
+                return (
+                  <TableRow key={l.id}>
+                    {isOwner && (
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                          {l.user.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {l.user.jobTitle}
+                        </Typography>
+                      </TableCell>
+                    )}
+                    <TableCell>{LEAVE_KIND_LABELS[l.kind]}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      {formatDate(l.startDate)} – {formatDate(l.endDate)}
+                      {now && <Chip size="small" color="info" label="зараз" sx={{ ml: 1 }} />}
                     </TableCell>
-                  )}
-                  <TableCell>{LEAVE_KIND_LABELS[l.kind]}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {formatDate(l.startDate)} – {formatDate(l.endDate)}
-                    {now && <Chip size="small" color="info" label="зараз" sx={{ ml: 1 }} />}
-                  </TableCell>
-                  <TableCell align="right">{l.days}</TableCell>
-                  <TableCell sx={{ maxWidth: 280 }}>
-                    <Typography variant="body2">{l.reason ?? '—'}</Typography>
-                    {l.decisionNote && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        {l.decidedBy?.name}: {l.decisionNote}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" color={state.color} variant={l.status === 'approved' ? 'filled' : 'outlined'} label={state.label} />
-                    {l.decidedBy && !l.decisionNote && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        {l.decidedBy.name}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                    {isOwner && l.status === 'pending' && (
-                      <>
-                        <Button size="small" variant="contained" onClick={() => setDeciding({ leave: l, decision: 'approved' })}>
-                          Погодити
-                        </Button>
-                        <Button size="small" color="error" onClick={() => setDeciding({ leave: l, decision: 'rejected' })} sx={{ ml: 1 }}>
-                          Відхилити
-                        </Button>
-                      </>
-                    )}
-                    {isOwner && l.status === 'approved' && !own && (
-                      <Button size="small" color="error" onClick={() => setDeciding({ leave: l, decision: 'rejected' })}>
-                        Скасувати
-                      </Button>
-                    )}
-                    {canCancel && (
-                      <Button size="small" onClick={() => cancel(l)}>
-                        Відкликати
-                      </Button>
-                    )}
+                    <TableCell align="right">{l.days}</TableCell>
+                    <TableCell sx={{ maxWidth: 280 }}>
+                      <Typography variant="body2">{l.reason ?? '—'}</Typography>
+                      {l.decisionNote && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          {l.decidedBy?.name}: {l.decisionNote}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" color={state.color} variant={l.status === 'approved' ? 'filled' : 'outlined'} label={state.label} />
+                      {l.decidedBy && !l.decisionNote && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          {l.decidedBy.name}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                      {actionsFor(l)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {shown.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <Typography color="text.secondary">{tab === 'pending' ? 'Нових заявок немає' : 'Заявок немає'}</Typography>
                   </TableCell>
                 </TableRow>
-              );
-            })}
-            {shown.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={7}>
-                  <Typography color="text.secondary">{tab === 'pending' ? 'Нових заявок немає' : 'Заявок немає'}</Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {creating && (
         <LeaveDialog

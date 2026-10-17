@@ -22,6 +22,8 @@ import { PurchaseStatusSelect } from '../components/PurchaseStatusSelect';
 import { PURCHASE_CATEGORY_LABELS } from '../constants/finance';
 import type { PurchaseListItem, PurchaseStatus } from '../types/finance';
 import { formatDate, formatMoney } from '../utils/format';
+import { MobileCard, MobileCardList } from '../components/MobileCard';
+import { useIsPhone } from '../utils/useIsPhone';
 
 // Procurement across batches: what is ordered, in transit or late.
 export function PurchasesPage() {
@@ -30,6 +32,7 @@ export function PurchasesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const isPhone = useIsPhone();
 
   function load() {
     apiClient
@@ -64,64 +67,87 @@ export function PurchasesPage() {
         </Alert>
       )}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Партія</TableCell>
-              <TableCell>Клієнт</TableCell>
-              <TableCell>Що</TableCell>
-              <TableCell>Постачальник</TableCell>
-              <TableCell>Замовлення / трек</TableCell>
-              <TableCell>Очікуємо</TableCell>
-              <TableCell align="right">Вартість</TableCell>
-              <TableCell>Статус</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {purchases.map((p) => (
-              <TableRow key={p.id} hover onClick={() => navigate(`/orders/${p.order.id}`)} sx={{ cursor: 'pointer' }}>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>№ {p.order.number}</TableCell>
-                <TableCell>{p.client.name}</TableCell>
-                <TableCell>
-                  {PURCHASE_CATEGORY_LABELS[p.category]}
-                  {p.description && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap title={p.description}>
-                      {p.description}
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell>{p.supplier}</TableCell>
-                <TableCell>
-                  {p.supplierOrderNo ?? '—'}
-                  {p.trackingNumber && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      {p.trackingNumber}
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                  {p.receivedAt ? `отримано ${formatDate(p.receivedAt)}` : formatDate(p.expectedAt)}
+      {isPhone ? (
+        <MobileCardList empty={showAll ? 'Закупівель ще немає' : 'Усе отримано — нічого не очікуємо'}>
+          {purchases.map((p) => (
+            <MobileCard
+              key={p.id}
+              onClick={() => navigate(`/orders/${p.order.id}`)}
+              title={`${PURCHASE_CATEGORY_LABELS[p.category]} · ${p.supplier}`}
+              aside={p.cost != null ? <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatMoney(p.cost, p.currency ?? 'UAH')}</Typography> : undefined}
+              lines={[
+                `Партія № ${p.order.number} · ${p.client.name}`,
+                p.description,
+                [p.supplierOrderNo && `замовлення ${p.supplierOrderNo}`, p.trackingNumber && `трек ${p.trackingNumber}`].filter(Boolean).join(' · '),
+                <>
+                  {p.receivedAt ? `Отримано ${formatDate(p.receivedAt)}` : `Очікуємо ${formatDate(p.expectedAt)}`}
                   {p.isLate && <Chip size="small" color="error" label="Затримка" sx={{ ml: 1 }} />}
-                </TableCell>
-                <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                  {p.cost != null ? formatMoney(p.cost, p.currency ?? 'UAH') : '—'}
-                </TableCell>
-                <TableCell>
-                  <PurchaseStatusSelect value={p.status} onChange={(status) => setStatus(p, status)} />
-                </TableCell>
-              </TableRow>
-            ))}
-            {purchases.length === 0 && (
+                </>,
+              ]}
+              actions={<PurchaseStatusSelect value={p.status} onChange={(status) => setStatus(p, status)} />}
+            />
+          ))}
+        </MobileCardList>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={8}>
-                  <Typography color="text.secondary">{showAll ? 'Закупівель ще немає' : 'Усе отримано — нічого не очікуємо'}</Typography>
-                </TableCell>
+                <TableCell>Партія</TableCell>
+                <TableCell>Клієнт</TableCell>
+                <TableCell>Що</TableCell>
+                <TableCell>Постачальник</TableCell>
+                <TableCell>Замовлення / трек</TableCell>
+                <TableCell>Очікуємо</TableCell>
+                <TableCell align="right">Вартість</TableCell>
+                <TableCell>Статус</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {purchases.map((p) => (
+                <TableRow key={p.id} hover onClick={() => navigate(`/orders/${p.order.id}`)} sx={{ cursor: 'pointer' }}>
+                  <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>№ {p.order.number}</TableCell>
+                  <TableCell>{p.client.name}</TableCell>
+                  <TableCell>
+                    {PURCHASE_CATEGORY_LABELS[p.category]}
+                    {p.description && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap title={p.description}>
+                        {p.description}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>{p.supplier}</TableCell>
+                  <TableCell>
+                    {p.supplierOrderNo ?? '—'}
+                    {p.trackingNumber && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        {p.trackingNumber}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    {p.receivedAt ? `отримано ${formatDate(p.receivedAt)}` : formatDate(p.expectedAt)}
+                    {p.isLate && <Chip size="small" color="error" label="Затримка" sx={{ ml: 1 }} />}
+                  </TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    {p.cost != null ? formatMoney(p.cost, p.currency ?? 'UAH') : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <PurchaseStatusSelect value={p.status} onChange={(status) => setStatus(p, status)} />
+                  </TableCell>
+                </TableRow>
+              ))}
+              {purchases.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8}>
+                    <Typography color="text.secondary">{showAll ? 'Закупівель ще немає' : 'Усе отримано — нічого не очікуємо'}</Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </>
   );
 }

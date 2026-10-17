@@ -32,9 +32,32 @@ import { ROLE_OPTIONS, STATUS_OPTIONS } from '../constants/users';
 import type { UserInput, TeamMember } from '../types/users';
 import { LEAVE_KIND_LABELS } from '../constants/leaves';
 import { formatDate } from '../utils/format';
+import { MobileCard, MobileCardList } from '../components/MobileCard';
+import { useIsPhone } from '../utils/useIsPhone';
 
 const ROLE_LABELS = Object.fromEntries(ROLE_OPTIONS.map((o) => [o.value, o.label]));
 const STATUS_LABELS = Object.fromEntries(STATUS_OPTIONS.map((o) => [o.value, o.label]));
+
+function StatusChip({ user: u }: { user: TeamMember }) {
+  return (
+    <>
+      <Chip
+        size="small"
+        label={STATUS_LABELS[u.status]}
+        color={u.status === 'working' ? 'success' : u.status === 'vacation' ? 'warning' : u.status === 'deleted' ? 'error' : 'default'}
+      />
+      {u.onLeave && (
+        <Chip
+          size="small"
+          variant="outlined"
+          color="info"
+          label={`${LEAVE_KIND_LABELS[u.onLeave.kind]} до ${formatDate(u.onLeave.until)}`}
+          sx={{ ml: 1 }}
+        />
+      )}
+    </>
+  );
+}
 
 export function UsersPage() {
   const { user: currentUser } = useAuth();
@@ -45,6 +68,7 @@ export function UsersPage() {
   const [editingUser, setEditingUser] = useState<TeamMember | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TeamMember | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<TeamMember | null>(null);
+  const isPhone = useIsPhone();
 
   function loadUsers() {
     setLoading(true);
@@ -97,9 +121,23 @@ export function UsersPage() {
 
   const canModify = hasPermission(currentUser, 'USERS', 'modify');
 
+  const actionsFor = (u: TeamMember) => (
+    <>
+      <IconButton size="small" title="Редагувати" onClick={() => openEdit(u)}>
+        <EditIcon fontSize="small" />
+      </IconButton>
+      <IconButton size="small" title="Скинути пароль" onClick={() => setPasswordTarget(u)}>
+        <VpnKeyIcon fontSize="small" />
+      </IconButton>
+      <IconButton size="small" title="Видалити" disabled={u.id === currentUser?.id} onClick={() => setDeleteTarget(u)}>
+        <DeleteIcon fontSize="small" />
+      </IconButton>
+    </>
+  );
+
   return (
     <>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2, gap: 1.5, flexWrap: 'wrap' }}>
         <Typography variant="h4">Користувачі</Typography>
         {canModify && (
           <Button variant="contained" onClick={openCreate}>
@@ -114,78 +152,59 @@ export function UsersPage() {
         </Alert>
       )}
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Ім'я</TableCell>
-              <TableCell>Посада</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Телефон</TableCell>
-              <TableCell>Рівень доступу</TableCell>
-              <TableCell>Статус</TableCell>
-              {canModify && <TableCell align="right">Дії</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell>
-                  {u.firstName} {u.lastName}
-                </TableCell>
-                <TableCell>{u.jobTitle}</TableCell>
-                <TableCell>{u.email}</TableCell>
-                <TableCell>{u.phone}</TableCell>
-                <TableCell>{ROLE_LABELS[u.role]}</TableCell>
-                <TableCell>
-                  <Chip
-                    size="small"
-                    label={STATUS_LABELS[u.status]}
-                    color={
-                      u.status === 'working'
-                        ? 'success'
-                        : u.status === 'vacation'
-                          ? 'warning'
-                          : u.status === 'deleted'
-                            ? 'error'
-                            : 'default'
-                    }
-                  />
-                  {u.onLeave && (
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      color="info"
-                      label={`${LEAVE_KIND_LABELS[u.onLeave.kind]} до ${formatDate(u.onLeave.until)}`}
-                      sx={{ ml: 1 }}
-                    />
-                  )}
-                </TableCell>
-                {canModify && (
-                  <TableCell align="right">
-                    <IconButton size="small" onClick={() => openEdit(u)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" title="Скинути пароль" onClick={() => setPasswordTarget(u)}>
-                      <VpnKeyIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" disabled={u.id === currentUser?.id} onClick={() => setDeleteTarget(u)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-            {users.length === 0 && (
+      {isPhone ? (
+        <MobileCardList empty="Немає користувачів">
+          {users.map((u) => (
+            <MobileCard
+              key={u.id}
+              title={`${u.firstName} ${u.lastName}`}
+              aside={<StatusChip user={u} />}
+              lines={[`${u.jobTitle} · ${ROLE_LABELS[u.role]}`, u.email, u.phone]}
+              actions={canModify ? actionsFor(u) : undefined}
+            />
+          ))}
+        </MobileCardList>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={canModify ? 7 : 6}>
-                  <Typography color="text.secondary">Немає користувачів</Typography>
-                </TableCell>
+                <TableCell>Ім'я</TableCell>
+                <TableCell>Посада</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Телефон</TableCell>
+                <TableCell>Рівень доступу</TableCell>
+                <TableCell>Статус</TableCell>
+                {canModify && <TableCell align="right">Дії</TableCell>}
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {users.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    {u.firstName} {u.lastName}
+                  </TableCell>
+                  <TableCell>{u.jobTitle}</TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>{u.phone}</TableCell>
+                  <TableCell>{ROLE_LABELS[u.role]}</TableCell>
+                  <TableCell>
+                    <StatusChip user={u} />
+                  </TableCell>
+                  {canModify && <TableCell align="right">{actionsFor(u)}</TableCell>}
+                </TableRow>
+              ))}
+              {users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={canModify ? 7 : 6}>
+                    <Typography color="text.secondary">Немає користувачів</Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {formOpen && (
         <UserDialog key={editingUser?.id ?? 'new'} initialValue={editingUser} onSubmit={handleSubmit} onClose={() => setFormOpen(false)} />

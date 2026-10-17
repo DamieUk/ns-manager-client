@@ -25,8 +25,10 @@ import { useAuth } from '../auth/useAuth';
 import { OPEN_STAGES, STAGES, type StageInfo } from '../constants/stages';
 import type { OrderStage, OrderSummary } from '../types/orders';
 import { daysSince, formatDate, formatMoney } from '../utils/format';
+import { useIsPhone } from '../utils/useIsPhone';
 
-const COLUMN_WIDTH = 264;
+// On phones a column takes most of the screen, with the next one peeking in.
+const COLUMN_WIDTH = { xs: '82vw', sm: 264 };
 
 function BatchCard({ order, onOpen }: { order: OrderSummary; onOpen: () => void }) {
   const blockers = order.blockers ?? [];
@@ -100,6 +102,7 @@ function Column({
       onDrop={onDrop}
       sx={{
         width: COLUMN_WIDTH,
+        scrollSnapAlign: 'start',
         flexShrink: 0,
         bgcolor: dropActive ? stage.tint : 'background.default',
         border: '1px solid',
@@ -143,6 +146,7 @@ export function BoardPage() {
   const [manager, setManager] = useState<'all' | 'me' | 'none'>('all');
   const [showClosed, setShowClosed] = useState(false);
   const [dropTarget, setDropTarget] = useState<OrderStage | null>(null);
+  const isPhone = useIsPhone();
 
   function load() {
     apiClient
@@ -181,12 +185,13 @@ export function BoardPage() {
   if (loading) return <CircularProgress />;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
+    // Fills the screen below the page padding (and the top bar on phones), so columns scroll inside.
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: { xs: 'calc(100dvh - 56px - 40px)', md: 'calc(100vh - 64px)' } }}>
       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2, gap: 2, flexWrap: 'wrap' }}>
         <Box>
           <Typography variant="h4">Партії</Typography>
           <Typography variant="body2" color="text.secondary">
-            Перетягніть картку в іншу колонку, щоб змінити етап
+            {isPhone ? 'Гортайте колонки вбік; відкрийте картку, щоб змінити етап' : 'Перетягніть картку в іншу колонку, щоб змінити етап'}
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}>
@@ -223,7 +228,11 @@ export function BoardPage() {
         </Alert>
       )}
 
-      <Stack direction="row" spacing={1.5} sx={{ flexGrow: 1, minHeight: 0, overflowX: 'auto', pb: 1, alignItems: 'stretch' }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        sx={{ flexGrow: 1, minHeight: 0, overflowX: 'auto', pb: 1, alignItems: 'stretch', scrollSnapType: { xs: 'x mandatory', sm: 'none' } }}
+      >
         {columns.map((stage) => (
           <Column
             key={stage.value}

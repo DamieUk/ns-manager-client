@@ -248,7 +248,7 @@ export function OrderPage() {
             <BatchShippingCard order={order} canModify={isOwner} onChanged={load} />
 
             <Paper sx={{ p: 2.5 }}>
-              <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1, flexWrap: 'wrap' }}>
                 <Typography variant="h6">Файли партії</Typography>
                 {canModify && (
                   <>

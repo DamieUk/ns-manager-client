@@ -19,7 +19,8 @@ export function KpiTile({ label, value, caption, icon, tone = 'default', to }: K
       component={to ? Link : 'div'}
       {...(to ? { to } : {})}
       sx={{
-        p: 2.25,
+        p: { xs: 1.75, sm: 2.25 },
+        minWidth: 0,
         textDecoration: 'none',
         color: primary ? '#fff' : 'text.primary',
         bgcolor: primary ? 'primary.main' : 'background.paper',
@@ -45,7 +46,7 @@ export function KpiTile({ label, value, caption, icon, tone = 'default', to }: K
           {icon}
         </Stack>
       </Stack>
-      <Typography variant="h5" sx={{ fontWeight: 800, color: tone === 'alert' ? 'error.main' : undefined, lineHeight: 1.2 }} noWrap>
+      <Typography variant="h5" sx={{ fontWeight: 800, color: tone === 'alert' ? 'error.main' : undefined, lineHeight: 1.2, fontSize: { xs: '1.15rem', sm: '1.5rem' } }} noWrap>
         {value}
       </Typography>
       {caption && (

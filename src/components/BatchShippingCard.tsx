@@ -17,7 +17,7 @@ export function BatchShippingCard({ order, canModify, onChanged }: { order: Orde
 
   return (
     <Paper sx={{ p: 2.5 }}>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="h6">Відвантаження</Typography>
         {canModify && (
           <Button size="small" startIcon={<AddIcon />} disabled={!canShip} onClick={() => setCreating(true)}>

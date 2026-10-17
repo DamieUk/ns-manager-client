@@ -79,7 +79,7 @@ export function ClientProductsSection({ clientId, canModify }: ClientProductsSec
 
   return (
     <Box>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="h6">Продукти</Typography>
         {canModify && (
           <Button size="small" variant="contained" onClick={() => setFormOpen(true)}>

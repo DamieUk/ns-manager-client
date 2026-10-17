@@ -31,6 +31,8 @@ import type { TeamMember } from '../types/users';
 import { formatDate, formatMoney } from '../utils/format';
 import { OrderDialog, type OrderFormValues } from './OrderDialog';
 import { StageChip } from './StageChip';
+import { MobileCard, MobileCardList } from './MobileCard';
+import { useIsPhone } from '../utils/useIsPhone';
 
 interface ClientOrdersSectionProps {
   clientId: string;
@@ -42,6 +44,7 @@ interface ClientOrdersSectionProps {
 // The client's batches; each opens its own page. A new batch starts at the quote stage.
 export function ClientOrdersSection({ clientId, canModify, documentPool, onRefreshClient }: ClientOrdersSectionProps) {
   const navigate = useNavigate();
+  const isPhone = useIsPhone();
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +134,7 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
 
   return (
     <Box>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1, gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="h6">Партії</Typography>
         {canModify && (
           <Button size="small" variant="contained" onClick={openCreate}>
@@ -148,6 +151,36 @@ export function ClientOrdersSection({ clientId, canModify, documentPool, onRefre
 
       {loading ? (
         <CircularProgress size={24} />
+      ) : isPhone ? (
+        <MobileCardList empty="Партій ще немає">
+          {orders.map((order) => (
+            <MobileCard
+              key={order.id}
+              onClick={() => navigate(`/orders/${order.id}`)}
+              title={`№ ${order.number} · ${order.product.name}`}
+              aside={<StageChip stage={order.stage} />}
+              lines={[
+                `${order.quantity} шт.${order.total != null ? ` · ${formatMoney(order.total)} без ПДВ` : ''}`,
+                <>
+                  Термін: {formatDate(order.dueDate)}
+                  {order.isOverdue && <Chip size="small" color="error" label="Протерміновано" sx={{ ml: 1 }} />}
+                </>,
+              ]}
+              actions={
+                canModify ? (
+                  <>
+                    <IconButton size="small" title="Редагувати" onClick={() => openEdit(order.id)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" title="Видалити" onClick={() => setDeleteTarget(order)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </>
+                ) : undefined
+              }
+            />
+          ))}
+        </MobileCardList>
       ) : (
         <TableContainer component={Paper}>
           <Table size="small">

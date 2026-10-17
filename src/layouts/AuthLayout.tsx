@@ -38,7 +38,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          p: 3,
+          p: { xs: 2, sm: 3 },
         }}
       >
         <Paper
@@ -46,10 +46,17 @@ function AuthLayout({ children }: AuthLayoutProps) {
           sx={{
             width: '100%',
             maxWidth: 380,
-            p: 4,
+            p: { xs: 3, sm: 4 },
             borderRadius: 3,
           }}
         >
+          {/* On phones the brand panel is hidden: show the mark above the form instead. */}
+          <Stack direction="row" spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', mb: 3, color: FOREST }}>
+            <Logo size={32} />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              Numenor
+            </Typography>
+          </Stack>
           {children}
         </Paper>
       </Box>

@@ -4,6 +4,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
 import {
   Alert,
+  Button,
   Chip,
   CircularProgress,
   IconButton,
@@ -28,6 +29,8 @@ import { StatCard } from '../components/StatCard';
 import { INVOICE_KIND_LABELS, invoiceState } from '../constants/finance';
 import type { InvoiceListItem } from '../types/finance';
 import { formatDate, formatMoney } from '../utils/format';
+import { MobileCard, MobileCardList } from '../components/MobileCard';
+import { useIsPhone } from '../utils/useIsPhone';
 
 type Filter = 'open' | 'paid' | 'cancelled' | 'all';
 
@@ -41,6 +44,7 @@ export function InvoicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('open');
   const [preview, setPreview] = useState<InvoiceListItem | null>(null);
+  const isPhone = useIsPhone();
 
   useEffect(() => {
     apiClient
@@ -99,58 +103,83 @@ export function InvoicesPage() {
         <Tab value="all" label="Усі" />
       </Tabs>
 
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Рахунок</TableCell>
-              <TableCell>Клієнт</TableCell>
-              <TableCell>Партія</TableCell>
-              <TableCell>Призначення</TableCell>
-              <TableCell>Дата</TableCell>
-              <TableCell>Сплатити до</TableCell>
-              <TableCell align="right">До сплати</TableCell>
-              <TableCell>Стан</TableCell>
-              <TableCell />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {shown.map((i) => {
-              const state = invoiceState(i);
-              return (
-                <TableRow key={i.id} hover onClick={() => navigate(`/orders/${i.order.id}`)} sx={{ cursor: 'pointer' }}>
-                  <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>№ {i.number}</TableCell>
-                  <TableCell>{i.client.name}</TableCell>
-                  <TableCell>
-                    № {i.order.number} · {i.order.product.name}
-                  </TableCell>
-                  <TableCell>{INVOICE_KIND_LABELS[i.kind]}</TableCell>
-                  <TableCell>{formatDate(i.issuedAt)}</TableCell>
-                  <TableCell sx={{ color: i.isOverdue ? 'error.main' : undefined }}>{formatDate(i.dueAt)}</TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
-                    {formatMoney(i.total)}
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" color={state.color} variant={i.status === 'paid' ? 'filled' : 'outlined'} label={state.label} />
-                  </TableCell>
-                  <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                    <IconButton size="small" title="PDF" onClick={() => setPreview(i)}>
-                      <PictureAsPdfIcon fontSize="small" />
-                    </IconButton>
+      {isPhone ? (
+        <MobileCardList empty="Рахунків немає">
+          {shown.map((i) => {
+            const state = invoiceState(i);
+            return (
+              <MobileCard
+                key={i.id}
+                onClick={() => navigate(`/orders/${i.order.id}`)}
+                title={`№ ${i.number} · ${formatMoney(i.total)}`}
+                aside={<Chip size="small" color={state.color} variant={i.status === 'paid' ? 'filled' : 'outlined'} label={state.label} />}
+                lines={[
+                  `${i.client.name} · партія № ${i.order.number}`,
+                  `${INVOICE_KIND_LABELS[i.kind]} · від ${formatDate(i.issuedAt)}${i.dueAt ? ` · до ${formatDate(i.dueAt)}` : ''}`,
+                ]}
+                actions={
+                  <Button size="small" startIcon={<PictureAsPdfIcon />} onClick={() => setPreview(i)}>
+                    PDF
+                  </Button>
+                }
+              />
+            );
+          })}
+        </MobileCardList>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Рахунок</TableCell>
+                <TableCell>Клієнт</TableCell>
+                <TableCell>Партія</TableCell>
+                <TableCell>Призначення</TableCell>
+                <TableCell>Дата</TableCell>
+                <TableCell>Сплатити до</TableCell>
+                <TableCell align="right">До сплати</TableCell>
+                <TableCell>Стан</TableCell>
+                <TableCell />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {shown.map((i) => {
+                const state = invoiceState(i);
+                return (
+                  <TableRow key={i.id} hover onClick={() => navigate(`/orders/${i.order.id}`)} sx={{ cursor: 'pointer' }}>
+                    <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>№ {i.number}</TableCell>
+                    <TableCell>{i.client.name}</TableCell>
+                    <TableCell>
+                      № {i.order.number} · {i.order.product.name}
+                    </TableCell>
+                    <TableCell>{INVOICE_KIND_LABELS[i.kind]}</TableCell>
+                    <TableCell>{formatDate(i.issuedAt)}</TableCell>
+                    <TableCell sx={{ color: i.isOverdue ? 'error.main' : undefined }}>{formatDate(i.dueAt)}</TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
+                      {formatMoney(i.total)}
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" color={state.color} variant={i.status === 'paid' ? 'filled' : 'outlined'} label={state.label} />
+                    </TableCell>
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                      <IconButton size="small" title="PDF" onClick={() => setPreview(i)}>
+                        <PictureAsPdfIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {shown.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9}>
+                    <Typography color="text.secondary">Рахунків немає</Typography>
                   </TableCell>
                 </TableRow>
-              );
-            })}
-            {shown.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={9}>
-                  <Typography color="text.secondary">Рахунків немає</Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <PdfViewerDialog
         open={preview !== null}

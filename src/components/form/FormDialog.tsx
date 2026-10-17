@@ -1,4 +1,5 @@
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import { useIsPhone } from '../../utils/useIsPhone';
 import type { FormEvent, ReactNode } from 'react';
 
 interface FormDialogProps {
@@ -17,7 +18,8 @@ interface FormDialogProps {
   children: ReactNode;
 }
 
-// The frame of every form dialog: wide, scrolling content between a fixed title and action row.
+// The frame of every form dialog: wide, scrolling content between a fixed title and action row;
+// on phones it takes the whole screen.
 // Validation is Formik's (fields turn red with a hint under them), so the browser's own
 // validation popups are switched off with noValidate.
 export function FormDialog({
@@ -33,8 +35,9 @@ export function FormDialog({
   onSubmit,
   children,
 }: FormDialogProps) {
+  const isPhone = useIsPhone();
   return (
-    <Dialog open onClose={submitting ? undefined : onClose} fullWidth maxWidth={maxWidth} scroll="paper">
+    <Dialog open onClose={submitting ? undefined : onClose} fullWidth maxWidth={maxWidth} fullScreen={isPhone} scroll="paper">
       <Box
         component="form"
         noValidate
@@ -54,19 +57,19 @@ export function FormDialog({
             </Typography>
           )}
         </DialogTitle>
-        <DialogContent dividers sx={{ py: 3 }}>
+        <DialogContent dividers sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
           <Stack spacing={3}>
             {error && <Alert severity="error">{error}</Alert>}
             {children}
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 2, flexWrap: 'wrap', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 } }}>
           {secondaryAction}
           <Box sx={{ flexGrow: 1 }} />
           <Button onClick={onClose} disabled={submitting}>
             Скасувати
           </Button>
-          <Button type="submit" variant="contained" color={submitColor} disabled={submitting} sx={{ minWidth: 128 }}>
+          <Button type="submit" variant="contained" color={submitColor} disabled={submitting} sx={{ minWidth: 128, flexGrow: { xs: 1, sm: 0 } }}>
             {submitting ? <CircularProgress size={20} color="inherit" /> : submitLabel}
           </Button>
         </DialogActions>
