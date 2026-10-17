@@ -1,155 +1,121 @@
 import AssignmentLateOutlinedIcon from '@mui/icons-material/AssignmentLateOutlined';
-import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
-import PlaylistAddCheckOutlinedIcon from '@mui/icons-material/PlaylistAddCheckOutlined';
-import {
-  Alert,
-  CircularProgress,
-  MenuItem,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import MemoryOutlinedIcon from '@mui/icons-material/MemoryOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
+import RefreshIcon from '@mui/icons-material/RefreshOutlined';
+import { Alert, Box, CircularProgress, IconButton, Stack, Typography } from '@mui/material';
+import { useEffect, useState, type ReactNode } from 'react';
 import apiClient from '../api/client';
 import { getErrorMessage } from '../api/errors';
-import { DashboardOrderRow } from '../components/DashboardOrderRow';
-import { StatCard } from '../components/StatCard';
-import type { DashboardResponse } from '../types/dashboard';
-import type { TeamMember } from '../types/users';
+import { ProcurementChart, ShippingChart, TeamToday } from '../components/dashboard/FlowCharts';
+import { KpiTile } from '../components/dashboard/KpiTile';
+import { ClientsShareChart, MoneyByMonthChart, ReceivablesChart } from '../components/dashboard/MoneyCharts';
+import { moneyShort } from '../components/dashboard/palette';
+import { PipelineChart, StageDurationsChart } from '../components/dashboard/PipelineChart';
+import { BatchProgressChart, DailyOutputChart, EmployeesChart, QualityGauge } from '../components/dashboard/ProductionCharts';
+import { ProductionReports } from '../components/dashboard/ProductionReports';
+import type { Overview } from '../types/overview';
+import { formatDateTime } from '../utils/format';
 
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Box>
+      <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 800, letterSpacing: '0.08em' }}>
+        {title}
+      </Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, minmax(0, 1fr))', gap: 2.5, mt: 0.5 }}>{children}</Box>
+    </Box>
+  );
+}
+
+// The owners' dashboard: headline numbers, then the pipeline, money, production, flow and team as
+// charts, and the daily reports per batch at the bottom.
 export function DashboardPage() {
-  const [data, setData] = useState<DashboardResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [employees, setEmployees] = useState<TeamMember[]>([]);
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    apiClient
-      .get<TeamMember[]>('/users')
-      .then((res) => setEmployees(res.data.filter((u) => u.role === 'employee')))
-      .catch(() => setEmployees([]));
-  }, []);
-
-  useEffect(() => {
+  function load() {
     setLoading(true);
     apiClient
-      .get<DashboardResponse>('/dashboard', { params: selectedEmployee ? { employee: selectedEmployee } : {} })
+      .get<Overview>('/dashboard/overview')
       .then((res) => setData(res.data))
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, [selectedEmployee]);
-
-  function toggle(orderId: string) {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(orderId)) next.delete(orderId);
-      else next.add(orderId);
-      return next;
-    });
   }
 
+  useEffect(load, []);
+
+  if (!data) return error ? <Alert severity="error">{error}</Alert> : <CircularProgress />;
+  const k = data.kpis;
+
   return (
-    <>
-      <Typography variant="h4" gutterBottom>
-        Дашборд
-      </Typography>
-
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <TextField
-          select
-          label="Працівник"
-          size="small"
-          value={selectedEmployee}
-          onChange={(e) => setSelectedEmployee(e.target.value)}
-          sx={{ minWidth: 240 }}
-        >
-          <MenuItem value="">Усі працівники</MenuItem>
-          {employees.map((emp) => (
-            <MenuItem key={emp.id} value={emp.id}>
-              {emp.firstName} {emp.lastName}
-              {emp.status === 'deleted' ? ' (видалено)' : ''}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        {data && (
+    <Stack spacing={3.5}>
+      <Stack direction="row" sx={{ alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+        <Box>
+          <Typography variant="h4">Дашборд</Typography>
+          <Typography color="text.secondary">Як іде робота: від прорахунку до відвантаження й оплати</Typography>
+        </Box>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <Typography variant="caption" color="text.secondary">
-            Оновлено: {new Date(data.generatedAt).toLocaleString()}
+            Оновлено {formatDateTime(data.generatedAt)}
           </Typography>
-        )}
+          <IconButton size="small" onClick={load} disabled={loading} aria-label="Оновити">
+            {loading ? <CircularProgress size={18} /> : <RefreshIcon fontSize="small" />}
+          </IconButton>
+        </Stack>
       </Stack>
 
-      {error && <Alert severity="error">{error}</Alert>}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 2 }}>
+        <KpiTile
+          label="Партії в роботі"
+          value={String(k.activeBatches)}
+          caption={`${moneyShort(k.pipelineValue)} без ПДВ`}
+          icon={<Inventory2OutlinedIcon fontSize="small" sx={{ color: '#fff' }} />}
+          tone="primary"
+          to="/board"
+        />
+        <KpiTile label="Плат у виробництві" value={String(k.boardsInWork)} caption="від закупівлі до відвантаження" icon={<MemoryOutlinedIcon fontSize="small" color="action" />} to="/board" />
+        <KpiTile
+          label="Протерміновано"
+          value={String(k.overdueBatches)}
+          caption={k.overdueAmount ? `і рахунків на ${moneyShort(k.overdueAmount)}` : 'партій після терміну'}
+          icon={<AssignmentLateOutlinedIcon fontSize="small" color={k.overdueBatches || k.overdueAmount ? 'error' : 'action'} />}
+          tone={k.overdueBatches || k.overdueAmount ? 'alert' : 'default'}
+          to="/board"
+        />
+        <KpiTile label="Очікуємо оплат" value={moneyShort(k.awaiting)} caption="за виставленими рахунками" icon={<PaymentsOutlinedIcon fontSize="small" color="action" />} to="/invoices" />
+        <KpiTile label="Отримано за місяць" value={moneyShort(k.paidThisMonth)} caption="з ПДВ" icon={<TaskAltOutlinedIcon fontSize="small" color="success" />} to="/invoices" />
+        <KpiTile label="Відвантажено за місяць" value={`${k.shippedThisMonth} шт.`} caption="плат за накладними" icon={<LocalShippingOutlinedIcon fontSize="small" color="action" />} to="/shipments" />
+      </Box>
 
-      {loading && <CircularProgress />}
+      <Section title="Партії">
+        <PipelineChart pipeline={data.pipeline} />
+        <ReceivablesChart receivables={data.money.receivables} />
+      </Section>
 
-      {!loading && data && (
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 2, mb: 3 }}>
-          <StatCard
-            label="Партії в роботі"
-            value={data.orders.length}
-            icon={<Inventory2OutlinedIcon fontSize="small" sx={{ color: '#fff' }} />}
-            highlight
-          />
-          <StatCard
-            label="Протерміновано"
-            value={data.orders.filter((o) => o.isOverdue).length}
-            icon={<AssignmentLateOutlinedIcon fontSize="small" color="error" />}
-          />
-          <StatCard
-            label="Потребує виправлення"
-            value={data.orders.reduce((sum, o) => sum + o.totals.needsRework, 0)}
-            icon={<BuildOutlinedIcon fontSize="small" color="action" />}
-          />
-          <StatCard
-            label="Залишилось плат"
-            value={data.orders.reduce((sum, o) => sum + o.remaining, 0)}
-            icon={<PlaylistAddCheckOutlinedIcon fontSize="small" color="action" />}
-          />
-        </Stack>
-      )}
+      <Section title="Гроші">
+        <MoneyByMonthChart months={data.money.months} />
+        <ClientsShareChart byClient={data.money.byClient} />
+      </Section>
 
-      {!loading && data && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell />
-                <TableCell>Партія</TableCell>
-                <TableCell>Клієнт</TableCell>
-                <TableCell>Продукт</TableCell>
-                <TableCell>Етап</TableCell>
-                <TableCell>Термін виконання</TableCell>
-                <TableCell align="right">К-сть</TableCell>
-                <TableCell align="right">Залишилось</TableCell>
-                <TableCell align="right">Готово</TableCell>
-                <TableCell align="right">Потребує виправлення</TableCell>
-                <TableCell align="right">Не допаяно</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.orders.map((order) => (
-                <DashboardOrderRow
-                  key={order.orderId}
-                  order={order}
-                  expanded={expandedIds.has(order.orderId)}
-                  onToggle={() => toggle(order.orderId)}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </>
+      <Section title="Виробництво">
+        <DailyOutputChart daily={data.production.daily} completed={k.completed30} reworkRate={k.reworkRate30} />
+        <QualityGauge reworkRate={k.reworkRate30} completed={k.completed30} />
+        <BatchProgressChart batches={data.production.batches} />
+        <EmployeesChart byEmployee={data.production.byEmployee} />
+      </Section>
+
+      <Section title="Потік">
+        <StageDurationsChart durations={data.stageDurations} />
+        <ProcurementChart procurement={data.procurement} />
+        <ShippingChart months={data.shipping.months} shippedThisMonth={k.shippedThisMonth} />
+        <TeamToday team={data.team} />
+      </Section>
+
+      <ProductionReports />
+    </Stack>
   );
 }
