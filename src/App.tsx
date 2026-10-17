@@ -8,10 +8,12 @@ import { CompanyPage } from './pages/CompanyPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { InvoicesPage } from './pages/InvoicesPage';
+import { LeavesPage } from './pages/LeavesPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyOrdersPage } from './pages/MyOrdersPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { OrderPage } from './pages/OrderPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { ProgressPage } from './pages/ProgressPage';
 import { PurchasesPage } from './pages/PurchasesPage';
 import { ShipmentsPage } from './pages/ShipmentsPage';
@@ -42,6 +44,8 @@ function App() {
           </Route>
 
           <Route path="orders/:orderId" element={<OrderPage />} />
+          <Route path="leaves" element={<LeavesPage />} />
+          <Route path="profile" element={<ProfilePage />} />
 
           <Route element={<ProtectedRoute allow={['executive']} permission={{ key: 'ORDERS', minAction: 'view' }} />}>
             <Route path="clients" element={<ClientsPage />} />

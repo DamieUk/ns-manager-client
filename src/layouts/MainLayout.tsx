@@ -1,4 +1,5 @@
 import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
+import BeachAccessOutlinedIcon from '@mui/icons-material/BeachAccessOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
@@ -10,6 +11,8 @@ import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
 import ViewKanbanOutlinedIcon from '@mui/icons-material/ViewKanbanOutlined';
 import { Avatar, Box, Container, IconButton, Stack, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import apiClient from '../api/client';
 import { Logo } from '../components/Logo';
 import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -19,8 +22,8 @@ import { FOREST, MINT_TINT } from '../theme';
 
 const SIDEBAR_WIDTH = 260;
 
-// `match` lists further path prefixes the item stays highlighted on.
-function NavItem({ to, icon, match = [], children }: { to: string; icon: ReactNode; match?: string[]; children: ReactNode }) {
+// `match` lists further path prefixes the item stays highlighted on; `badge` is a count to act on.
+function NavItem({ to, icon, match = [], badge, children }: { to: string; icon: ReactNode; match?: string[]; badge?: number; children: ReactNode }) {
   const { pathname } = useLocation();
   const isActive = [to, ...match].some((prefix) => pathname.startsWith(prefix));
 
@@ -45,14 +48,39 @@ function NavItem({ to, icon, match = [], children }: { to: string; icon: ReactNo
       }}
     >
       {icon}
-      {children}
+      <Box component="span" sx={{ flexGrow: 1 }}>
+        {children}
+      </Box>
+      {Boolean(badge) && (
+        <Box
+          component="span"
+          sx={{ minWidth: 20, height: 20, px: 0.75, borderRadius: 10, bgcolor: 'warning.main', color: '#fff', fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center' }}
+        >
+          {badge}
+        </Box>
+      )}
     </Box>
   );
+}
+
+// Leave requests waiting for an owner's decision, refreshed on every page change.
+function usePendingLeaves(enabled: boolean): number {
+  const { pathname } = useLocation();
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    apiClient
+      .get<unknown[]>('/leaves', { params: { status: 'pending' } })
+      .then((res) => setCount(res.data.length))
+      .catch(() => setCount(0));
+  }, [enabled, pathname]);
+  return count;
 }
 
 function MainLayout() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+  const pendingLeaves = usePendingLeaves(user?.role === 'executive');
 
   if (!user) return null;
 
@@ -123,6 +151,9 @@ function MainLayout() {
                   Користувачі
                 </NavItem>
               )}
+              <NavItem to="/leaves" badge={pendingLeaves} icon={<BeachAccessOutlinedIcon fontSize="small" />}>
+                Відпустки
+              </NavItem>
               <NavItem to="/company" icon={<BusinessOutlinedIcon fontSize="small" />}>
                 Компанія
               </NavItem>
@@ -136,6 +167,9 @@ function MainLayout() {
               <NavItem to="/my-orders" match={['/orders/']} icon={<Inventory2OutlinedIcon fontSize="small" />}>
                 Мої замовлення
               </NavItem>
+              <NavItem to="/leaves" icon={<BeachAccessOutlinedIcon fontSize="small" />}>
+                Відпустки
+              </NavItem>
             </>
           )}
         </Stack>
@@ -145,12 +179,19 @@ function MainLayout() {
         <Stack
           direction="row"
           spacing={1.5}
-          sx={{ alignItems: 'center', mx: 1.5, px: 1.5, py: 1.25, borderRadius: 2, bgcolor: 'background.default' }}
+          sx={{
+            alignItems: 'center',
+            mx: 1.5,
+            px: 1.5,
+            py: 1.25,
+            borderRadius: 2,
+            bgcolor: pathname.startsWith('/profile') ? MINT_TINT : 'background.default',
+          }}
         >
           <Avatar src={user.avatarUrl ?? undefined} sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
             {user.name.charAt(0).toUpperCase()}
           </Avatar>
-          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+          <Box component={Link} to="/profile" title="Мій профіль" sx={{ minWidth: 0, flexGrow: 1, color: 'inherit', textDecoration: 'none' }}>
             <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>
               {user.name}
             </Typography>

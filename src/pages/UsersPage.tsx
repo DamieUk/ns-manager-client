@@ -30,6 +30,8 @@ import { SetPasswordDialog } from '../components/SetPasswordDialog';
 import { UserDialog } from '../components/UserDialog';
 import { ROLE_OPTIONS, STATUS_OPTIONS } from '../constants/users';
 import type { UserInput, TeamMember } from '../types/users';
+import { LEAVE_KIND_LABELS } from '../constants/leaves';
+import { formatDate } from '../utils/format';
 
 const ROLE_LABELS = Object.fromEntries(ROLE_OPTIONS.map((o) => [o.value, o.label]));
 const STATUS_LABELS = Object.fromEntries(STATUS_OPTIONS.map((o) => [o.value, o.label]));
@@ -149,6 +151,15 @@ export function UsersPage() {
                             : 'default'
                     }
                   />
+                  {u.onLeave && (
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color="info"
+                      label={`${LEAVE_KIND_LABELS[u.onLeave.kind]} до ${formatDate(u.onLeave.until)}`}
+                      sx={{ ml: 1 }}
+                    />
+                  )}
                 </TableCell>
                 {canModify && (
                   <TableCell align="right">
