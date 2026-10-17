@@ -119,8 +119,9 @@ export function DocumentList({
       <PdfViewerDialog
         open={previewDoc !== null}
         onClose={() => setPreviewDoc(null)}
-        documentId={previewDoc?._id ?? null}
+        src={previewDoc ? `/documents/${previewDoc._id}/download` : null}
         title={previewDoc?.originalName ?? ''}
+        fileName={previewDoc?.originalName}
       />
     </>
   );

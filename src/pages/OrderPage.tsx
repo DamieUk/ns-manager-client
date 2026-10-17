@@ -27,6 +27,10 @@ import { useAuth } from '../auth/useAuth';
 import { BatchAnnexCard } from '../components/BatchAnnexCard';
 import { BatchInvoicesCard } from '../components/BatchInvoicesCard';
 import { BatchPurchasesCard } from '../components/BatchPurchasesCard';
+import { BatchPrepCard } from '../components/BatchPrepCard';
+import { BatchQcCard } from '../components/BatchQcCard';
+import { BatchShippingCard } from '../components/BatchShippingCard';
+import { stageIndex } from '../constants/stages';
 import { BatchPriceCard } from '../components/BatchPriceCard';
 import { BatchStageCard } from '../components/BatchStageCard';
 import { DocumentList } from '../components/DocumentList';
@@ -239,6 +243,9 @@ export function OrderPage() {
             {isOwner && <BatchAnnexCard order={order} canModify={canModify} onChanged={load} onError={setError} />}
             {isOwner && <BatchInvoicesCard order={order} onChanged={load} onError={setError} />}
             {isOwner && <BatchPurchasesCard order={order} onChanged={load} onError={setError} />}
+            <BatchPrepCard order={order} onChanged={load} onError={setError} />
+            {stageIndex(order.stage) >= stageIndex('qc') && <BatchQcCard active={order.stage === 'qc'} />}
+            <BatchShippingCard order={order} canModify={isOwner} onChanged={load} />
 
             <Paper sx={{ p: 2.5 }}>
               <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>

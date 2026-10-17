@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import { Box, Button, Chip, IconButton, LinearProgress, Menu, MenuItem, Paper, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import apiClient from '../api/client';
@@ -12,6 +13,7 @@ import type { OrderDetail } from '../types/orders';
 import { formatDate, formatMoney } from '../utils/format';
 import { InvoiceDialog } from './InvoiceDialog';
 import { PaymentDialog } from './PaymentDialog';
+import { PdfViewerDialog } from './PdfViewerDialog';
 
 interface BatchInvoicesCardProps {
   order: OrderDetail;
@@ -24,6 +26,7 @@ export function BatchInvoicesCard({ order, onChanged, onError }: BatchInvoicesCa
   const [editing, setEditing] = useState<{ invoice: Invoice | null } | null>(null);
   const [paying, setPaying] = useState<Invoice | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement; invoice: Invoice } | null>(null);
+  const [preview, setPreview] = useState<Invoice | null>(null);
 
   const invoices = order.invoices ?? [];
   const payments = order.payments ?? { invoiced: 0, invoicedWithVat: 0, paid: 0, toInvoice: 0, awaiting: 0, vatRate: 0 };
@@ -114,6 +117,9 @@ export function BatchInvoicesCard({ order, onChanged, onError }: BatchInvoicesCa
                 </Typography>
               </Box>
               <Chip size="small" color={state.color} variant={inv.status === 'paid' ? 'filled' : 'outlined'} label={state.label} />
+              <IconButton size="small" title="PDF" onClick={() => setPreview(inv)}>
+                <PictureAsPdfIcon fontSize="small" />
+              </IconButton>
               {inv.status !== 'cancelled' && (
                 <IconButton size="small" title="Оплата" onClick={() => setPaying(inv)}>
                   <PaymentsIcon fontSize="small" />
@@ -163,6 +169,13 @@ export function BatchInvoicesCard({ order, onChanged, onError }: BatchInvoicesCa
           }}
         />
       )}
+      <PdfViewerDialog
+        open={preview !== null}
+        onClose={() => setPreview(null)}
+        src={preview ? `/invoices/${preview.id}/pdf` : null}
+        title={preview ? `Рахунок № ${preview.number}` : ''}
+        fileName={preview ? `Рахунок ${preview.number}.pdf` : undefined}
+      />
       {paying && (
         <PaymentDialog
           invoice={paying}

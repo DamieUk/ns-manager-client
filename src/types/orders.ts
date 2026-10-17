@@ -43,6 +43,19 @@ export interface OrderSummary {
   priceLocked?: boolean;
   nextStage?: OrderStage | null;
   blockers?: string[];
+  shipped?: number;
+}
+
+export type PrepItemKey = 'pnp_program' | 'stencil' | 'thermal_profile';
+export type PrepStatus = 'pending' | 'done' | 'not_needed';
+
+export interface PrepItem {
+  item: PrepItemKey;
+  status: PrepStatus;
+  document: ClientDocument | null;
+  note: string | null;
+  updatedBy: Person | null;
+  updatedAt: string | null;
 }
 
 export interface StageEvent {
@@ -58,6 +71,8 @@ export interface OrderDetail extends OrderSummary {
   documents: ClientDocument[];
   progress: { completed: number; needsRework: number; partiallyAssembled: number; remaining: number };
   history: StageEvent[];
+  prep: PrepItem[];
+  shipping: { shipped: number; remaining: number; notes: Array<{ id: string; number: string; shippedAt: string; quantity: number }> };
   annexes?: Contract[];
   invoices?: Invoice[];
   payments?: BatchPayments;

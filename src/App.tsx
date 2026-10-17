@@ -14,6 +14,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import { OrderPage } from './pages/OrderPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { PurchasesPage } from './pages/PurchasesPage';
+import { ShipmentsPage } from './pages/ShipmentsPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { UsersPage } from './pages/UsersPage';
 import { ProtectedRoute } from './routing/ProtectedRoute';
@@ -36,6 +37,7 @@ function App() {
             <Route path="board" element={<BoardPage />} />
             <Route path="invoices" element={<InvoicesPage />} />
             <Route path="purchases" element={<PurchasesPage />} />
+            <Route path="shipments" element={<ShipmentsPage />} />
             <Route path="company" element={<CompanyPage />} />
           </Route>
 

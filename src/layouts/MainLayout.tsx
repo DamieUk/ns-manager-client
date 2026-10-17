@@ -2,6 +2,7 @@ import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurned
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
@@ -111,8 +112,11 @@ function MainLayout() {
               <NavItem to="/invoices" icon={<ReceiptLongOutlinedIcon fontSize="small" />}>
                 Рахунки
               </NavItem>
-              <NavItem to="/purchases" icon={<LocalShippingOutlinedIcon fontSize="small" />}>
+              <NavItem to="/purchases" icon={<ShoppingCartOutlinedIcon fontSize="small" />}>
                 Закупівлі
+              </NavItem>
+              <NavItem to="/shipments" icon={<LocalShippingOutlinedIcon fontSize="small" />}>
+                Відвантаження
               </NavItem>
               {hasPermission(user, 'USERS', 'view') && (
                 <NavItem to="/users" icon={<GroupsOutlinedIcon fontSize="small" />}>

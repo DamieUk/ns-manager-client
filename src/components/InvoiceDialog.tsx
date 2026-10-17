@@ -15,6 +15,7 @@ import { FULL_ROW } from './form/grid';
 
 interface InvoiceValues {
   kind: InvoiceKind;
+  description: string;
   amount: string;
   issuedAt: string;
   dueAt: string;
@@ -26,6 +27,12 @@ interface InvoiceDialogProps {
   invoice: Invoice | null;
   onClose: () => void;
   onSaved: () => void;
+}
+
+// The line printed when it is left empty (as the API builds it).
+function defaultLine(kind: InvoiceKind, order: OrderDetail): string {
+  if (kind === 'full') return order.product.name;
+  return `${kind === 'prepayment' ? 'Передоплата' : 'Доплата'}: ${order.product.name}, ${order.quantity} шт. (партія № ${order.number})`;
 }
 
 // Issues an invoice for the batch (or edits an unpaid one). The amount is without VAT and stays
@@ -41,6 +48,7 @@ export function InvoiceDialog({ order, invoice, onClose, onSaved }: InvoiceDialo
   const formik = useFormik<InvoiceValues>({
     initialValues: {
       kind: invoice?.kind ?? (live.length > 0 ? 'balance' : 'prepayment'),
+      description: invoice?.description ?? '',
       amount: invoice ? String(invoice.amount) : live.length > 0 ? String(left) : '',
       issuedAt: invoice ? toDateInput(invoice.issuedAt) : dayInput(),
       dueAt: invoice ? toDateInput(invoice.dueAt) : dayInput(5),
@@ -58,7 +66,14 @@ export function InvoiceDialog({ order, invoice, onClose, onSaved }: InvoiceDialo
     },
     onSubmit: async (v) => {
       setError(null);
-      const body = { kind: v.kind, amount: toNumber(v.amount), issuedAt: v.issuedAt, dueAt: v.dueAt || null, note: v.note.trim() };
+      const body = {
+        kind: v.kind,
+        description: v.description.trim(),
+        amount: toNumber(v.amount),
+        issuedAt: v.issuedAt,
+        dueAt: v.dueAt || null,
+        note: v.note.trim(),
+      };
       try {
         if (invoice) await apiClient.put(`/invoices/${invoice.id}`, body);
         else await apiClient.post('/invoices', { ...body, order: order.id });
@@ -126,6 +141,15 @@ export function InvoiceDialog({ order, invoice, onClose, onSaved }: InvoiceDialo
           </Stack>
         </Stack>
       </Box>
+
+      <FormSection title="У рахунку" columns={1}>
+        <TextField
+          label="Рядок рахунку"
+          {...fieldProps(formik, 'description', 'Порожньо — підставимо назву продукту й партію')}
+          placeholder={defaultLine(formik.values.kind, order)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+      </FormSection>
 
       <FormSection title="Дати">
         <TextField type="date" label="Дата рахунку" {...fieldProps(formik, 'issuedAt')} slotProps={{ inputLabel: { shrink: true } }} required />

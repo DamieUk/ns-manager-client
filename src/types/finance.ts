@@ -8,6 +8,7 @@ export interface Invoice {
   number: string;
   order: string;
   kind: InvoiceKind;
+  description: string | null; // the printed line; null: derived from the batch
   amount: number; // without VAT
   vatRate: number;
   vatAmount: number;
@@ -84,4 +85,29 @@ export interface Company {
   phone: string;
   email: string;
   updatedAt: string;
+}
+
+// A delivery note (видаткова накладна): lines from one client's batches; prices without VAT.
+export interface ShipmentLine {
+  order: { id: string; number: string };
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  sum: number;
+}
+
+export interface Shipment {
+  id: string;
+  number: string;
+  client: { id: string; name: string };
+  shippedAt: string;
+  carrier: string | null;
+  trackingNumber: string | null;
+  note: string | null;
+  lines: ShipmentLine[];
+  net: number;
+  vatRate: number;
+  vat: number;
+  total: number;
+  createdAt: string;
 }
